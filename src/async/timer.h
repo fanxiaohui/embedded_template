@@ -3,10 +3,6 @@
 
 #include "./platform.h"
 
-#ifndef __FAR
-#define __FAR
-#endif
-
 typedef struct async_timer async_timer_t;
 
 #define ASYNC_TIMER_CANCEL 0
@@ -27,6 +23,7 @@ async_timer_t *__FAR async_timer_register(async_timer_handler_t func, async_time
 void async_timer_set_handler(async_timer_t *__FAR timer, async_timer_handler_t func);
 /// 设置定时器的附加数据.
 void async_timer_set_data(async_timer_t *__FAR timer, void *__FAR dat);
+/// 这个函数返回async_timer_register时传入的dat参数.
 void *__FAR async_timer_get_data(async_timer_t *__FAR timer);
 /// 删除一个定时器.
 void async_timer_cancel(async_timer_t *__FAR timer);

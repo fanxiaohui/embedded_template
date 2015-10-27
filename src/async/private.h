@@ -17,7 +17,6 @@
 #include "./timer.h"
 #include "./event_call.h"
 
-
 struct async_sem_private {
     unsigned char type;
     union {
@@ -55,7 +54,6 @@ async_timeout_t async_timer_add_timer(async_timer_t *__FAR timer, async_timeout_
 
 
 void async_event_call_exec(async_event_call_t *__FAR event_call);
-
 
 
 #pragma DATA_SEG __RPAGE_SEG PAGED_RAM
