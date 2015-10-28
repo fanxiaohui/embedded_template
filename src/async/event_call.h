@@ -1,7 +1,7 @@
 #ifndef __ASYNC_EVENT_CALL_H__
 #define __ASYNC_EVENT_CALL_H__
 
-#include "./platform.h"
+#include "./looper.h"
 
 typedef struct async_event_call async_event_call_t;
 
@@ -15,7 +15,7 @@ typedef char (*event_handler)(void *__FAR dat);
 
 /// 异步执行函数的类型.
 /// 异步执行函数.
-async_event_call_t *__FAR async_event_call_post(event_handler func, void *__FAR dat);
+async_event_call_t *__FAR async_event_call_post(async_looper_t *__FAR looper, event_handler func, void *__FAR dat);
 char async_event_call_trigger(async_event_call_t *__FAR);
 
 #endif

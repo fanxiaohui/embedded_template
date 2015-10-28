@@ -19,7 +19,6 @@ target_link_libraries(
     ringbuffer
     pthread
     m
-    freertos
 )
 
 

@@ -89,6 +89,8 @@ ringbuffer_t name = {                        \
 /// \param rb 需要清空的循环Buffer.
 void ringbuffer_clear(ringbuffer_t *__FAR rb);
 
+void ringbuffer_init(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len);
+
 /// \brief ringbuffer_put 向循环Buffer追加指定长度的相同数据.
 ///
 /// \param rb 需要追加的循环Buffer.

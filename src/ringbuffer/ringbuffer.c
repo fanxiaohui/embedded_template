@@ -23,6 +23,17 @@ void ringbuffer_clear(ringbuffer_t *__FAR rb) {
     rb->out = 0;
 }
 
+void ringbuffer_init(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
+#if RINGBUFFER_CHECK
+    rb->magic = RINGBUFFER_CHECK_MAGIC;
+#endif
+    rb->buf = buf;
+    rb->len = 0;
+    rb->in = 0;
+    rb->out = 0;
+    rb->cap = len;
+}
+
 RINGBUFFER_SIZE_TYPE ringbuffer_put(ringbuffer_t *__FAR rb, unsigned char uch, RINGBUFFER_SIZE_TYPE len) {
     RINGBUFFER_SIZE_TYPE i;
 
@@ -46,7 +57,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_read(ringbuffer_t *__FAR rb, unsigned char *
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }
-    
+
     if (!buf) {
         return 0;
     }
@@ -132,7 +143,7 @@ static unsigned char pop_char(ringbuffer_t *__FAR rb, char *__FAR pc) {
 RINGBUFFER_SIZE_TYPE ringbuffer_read_string(ringbuffer_t *__FAR rb, char *__FAR buf, RINGBUFFER_SIZE_TYPE bufSize) {
     char chr;
     RINGBUFFER_SIZE_TYPE ret = 0;
-    
+
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }
@@ -154,7 +165,9 @@ char ringbuffer_read_string_and_is_with_prefix(ringbuffer_t *__FAR rb, const cha
         return 0;
     }
 
-    if (!size) return 0;
+    if (!size) {
+        return 0;
+    }
 
     if (!prefix) {
         *size = ringbuffer_read_string(rb, buf, *size);
