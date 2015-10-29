@@ -1,9 +1,8 @@
-/// \file ring_buffer.c
+/// \file ringbuffer.c
 /// \brief 循环Buffer的实现.
-/// \author Xi Qingping, qingping.xi@ligoo.cn
+/// \author Xi Qingping
 /// \version
 /// \date 2015-09-01
-//
 
 #include "ringbuffer.h"
 

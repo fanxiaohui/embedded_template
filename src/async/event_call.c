@@ -1,3 +1,9 @@
+/// \file event_call.c
+/// \brief 异步事件调用实现.
+/// \author Xi Qingping
+/// \version
+/// \date 2015-10-29
+
 #include "./private.h"
 #include <list/list.h>
 
@@ -5,8 +11,8 @@ static LIST_HEAD(free_list);
 
 struct async_event_call {
     struct list_head head;
-    event_handler func;
-    async_looper_t *looper;
+    event_callback_t cb;
+    async_looper_t looper;
     void *__FAR dat;
 };
 
@@ -20,56 +26,62 @@ void async_event_call_init(void) {
     }
 }
 
-async_event_call_t *__FAR async_event_call_post(async_looper_t *__FAR looper, event_handler func, void *__FAR dat) {
-    async_event_call_t *__FAR ret = ASYNC_EVENT_CALL_ERROR;
+async_event_call_t async_event_call_register(async_looper_t looper, event_callback_t cb, void *__FAR dat) {
+    async_event_call_t ret;
+    struct async_sem_private priv;
 
     async_lock_mutex(async_g_lock);
     if (list_empty(&free_list)) {
         async_unlock_mutex(async_g_lock);
-        return ret;
+        return ASYNC_EVENT_CALL_REGISTER_ERROR;
     }
-    ret = (async_event_call_t *__FAR)free_list.next;
+
+    ret = (async_event_call_t)free_list.next;
     list_del(&ret->head);
-    ret->func = func;
+    async_unlock_mutex(async_g_lock);
+
+    ret->cb = cb;
     ret->dat = dat;
     ret->looper = looper;
 
-    {
-        struct async_sem_private priv;
-        priv.type = PRIVATE_SEM_TYPE_ADD_EVENT_CALL;
-        priv.data.event_call = ret;
-        if (!async_notify_loop(looper, &priv)) {
-            async_lock_mutex(async_g_lock);
-            list_add(&ret->head, &free_list);
-            async_unlock_mutex(async_g_lock);
-            ret = ASYNC_EVENT_CALL_CANCEL;
-        }
+    priv.type = PRIVATE_SEM_TYPE_ADD_EVENT_CALL;
+    priv.data.event_call = ret;
+    if (async_notify_loop(looper, &priv)) { // OK
+        return ret;
     }
 
-    return ret;
+    // error put back to free_list.
+    async_lock_mutex(async_g_lock);
+    list_add(&ret->head, &free_list);
+    async_unlock_mutex(async_g_lock);
+    return ASYNC_EVENT_CALL_REGISTER_ERROR;
 }
 
-void async_event_call_exec(struct list_head *__FAR event_calls, async_event_call_t *__FAR event_call) {
+void async_event_call_exec(struct list_head *__FAR event_calls, async_event_call_t event_call) {
     struct list_head *__FAR pos;
+
     list_for_each(pos, event_calls) {
         if (pos != &event_call->head) {
             continue;
         }
-        if (!event_call->func(event_call->dat)) {
-            async_lock_mutex(async_g_lock);
-            list_move(&event_call->head, &free_list);
-            async_unlock_mutex(async_g_lock);
+        if (event_call->cb(event_call->dat)) {
+
+            return;
         }
-        return;
+
+        // cancel the event call.
+        async_lock_mutex(async_g_lock);
+        list_move(&event_call->head, &free_list);
+        async_unlock_mutex(async_g_lock);
     }
 }
 
-
-
-char async_event_call_trigger(async_event_call_t *__FAR event_call) {
+char async_event_call_trigger(async_event_call_t event_call) {
     struct async_sem_private priv;
+
     priv.type = PRIVATE_SEM_TYPE_TRIGGER_EVENT_CALL;
     priv.data.event_call = event_call;
+
     return async_notify_loop(event_call->looper, &priv);
 }
 

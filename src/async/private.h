@@ -28,8 +28,8 @@ extern async_mutex_t async_g_lock;
 struct async_sem_private {
     unsigned char type;
     union {
-        async_event_call_t *__FAR event_call;
-        async_timer_t *__FAR timer;
+        async_timer_t timer;
+        async_event_call_t event_call;
     } data;
 };
 
@@ -39,15 +39,15 @@ struct async_sem_private {
 #define PRIVATE_SEM_TYPE_EXIT 3
 
 void async_looper_init(void);
-char async_notify_loop(struct async_looper *__FAR looper, struct async_sem_private *priv);
+char async_notify_loop(async_looper_t looper, const struct async_sem_private *priv);
 
 void async_timer_init(void);
 void async_event_call_init(void);
 async_timeout_t async_timer_exec(struct list_head *__FAR timers, async_timeout_t escaped);
-async_timeout_t aasync_timer_add_timer(struct list_head *__FAR timers, async_timer_t *__FAR timer, async_timeout_t escaped);
+async_timeout_t aasync_timer_add_timer(struct list_head *__FAR timers, async_timer_t timer, async_timeout_t escaped);
 
 
-void async_event_call_exec(struct list_head *__FAR event_calls, async_event_call_t *__FAR event_call);
+void async_event_call_exec(struct list_head *__FAR event_calls, async_event_call_t event_call);
 
 
 #pragma DATA_SEG __RPAGE_SEG PAGED_RAM

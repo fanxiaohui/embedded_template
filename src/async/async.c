@@ -1,3 +1,9 @@
+/// \file async.c
+/// \brief ASYNCµÄÊµÏÖ.
+/// \author Xi Qingping
+/// \version
+/// \date 2015-10-29
+
 #include "./private.h"
 
 

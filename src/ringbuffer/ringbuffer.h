@@ -1,6 +1,6 @@
-/// \file ring_buffer.h
+/// \file ringbuffer.h
 /// \brief 循环Buffer的声明
-/// \author Xi Qingping, qingping.xi@ligoo.cn
+/// \author Xi Qingping
 /// \version
 /// \date 2015-08-26
 
@@ -89,6 +89,11 @@ ringbuffer_t name = {                        \
 /// \param rb 需要清空的循环Buffer.
 void ringbuffer_clear(ringbuffer_t *__FAR rb);
 
+/// \brief ringbuffer_init 初始化一个循环Buffer
+///
+/// \param rb 需要初始化的循环Buffer.
+/// \param buf 循环Buffer的缓冲区.
+/// \param len 缓冲区长度.
 void ringbuffer_init(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len);
 
 /// \brief ringbuffer_put 向循环Buffer追加指定长度的相同数据.
@@ -162,7 +167,20 @@ RINGBUFFER_SIZE_TYPE ringbuffer_read_string(ringbuffer_t *__FAR rb, char *__FAR 
 /// \return 1 读取到的字符串是以prefix开头; 0 读取到的字符串不以prefix开头.
 char ringbuffer_read_string_and_is_with_prefix(ringbuffer_t *__FAR rb, const char *__FAR prefix, char *__FAR buf, RINGBUFFER_SIZE_TYPE *__FAR size);
 
+/// \brief ringbuffer_drop_from_tail 从循环Buffer的尾部丢弃数据.
+///
+/// \param rb 需要操作的循环Buffer.
+/// \param size 丢弃的数据长度.
+///
+/// \return 丢弃的数据长度.
 RINGBUFFER_SIZE_TYPE ringbuffer_drop_from_tail(ringbuffer_t *__FAR rb, RINGBUFFER_SIZE_TYPE size);
+
+/// \brief ringbuffer_drop_from_head 从循环Buffer的头部丢弃数据.
+///
+/// \param rb 需要操作的循环Buffer.
+/// \param size 丢弃的数据长度.
+///
+/// \return 丢弃的数据长度.
 RINGBUFFER_SIZE_TYPE ringbuffer_drop_from_head(ringbuffer_t *__FAR rb, RINGBUFFER_SIZE_TYPE size);
 
 #endif

@@ -1,9 +1,6 @@
 
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeRTOS/FreeRTOS/
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeRTOS/FreeRTOS/Source/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/../third_party/FreeRTOS/FreeRTOS/Source/portable/MSVC-MingW
 )
 
 add_subdirectory(async)
