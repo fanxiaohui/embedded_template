@@ -30,7 +30,7 @@ char async_pend_sem(async_sem_t sem, async_timeout_t timeout) {
         to.tv_sec += 1;
     }
 
-    return 0 == sem_timedwait(sem, (const struct timespec *)&to);
+    return 0 == sem_timedwait(sem, &to);
 }
 
 
@@ -43,7 +43,6 @@ async_mutex_t async_create_mutex(void) {
     static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
     return &mutex;
 }
-
 
 void async_lock_mutex(async_mutex_t mutex) {
     pthread_mutex_lock(mutex);

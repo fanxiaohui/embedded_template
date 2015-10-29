@@ -50,6 +50,9 @@ async_timeout_t aasync_timer_add_timer(struct list_head *__FAR timers, async_tim
 void async_event_call_exec(struct list_head *__FAR event_calls, async_event_call_t event_call);
 
 
+void async_assert_info(const char *file, int line, const char *msg);
+
+#define ASYNC_ASSERT(condition, );
 #pragma DATA_SEG __RPAGE_SEG PAGED_RAM
 
 #endif

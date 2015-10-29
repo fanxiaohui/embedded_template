@@ -11,6 +11,13 @@
 #include "./platform_posix.h"
 #endif
 
+/// \brief async_assert_info 断言输出.
+/// 
+/// \param file 源文件路径.
+/// \param line 行号.
+/// \param msg 信息.
+void async_assert_info(const char *file, int line, const char *msg);
+
 /// \brief async_platform_init 平台相关的运行环境初始化.
 void async_platform_init(void);
 

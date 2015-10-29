@@ -1,4 +1,4 @@
-/// \file timer.r
+/// \file timer.c
 /// \brief 异步定时器实现.
 /// \author Xi Qingping
 /// \version
