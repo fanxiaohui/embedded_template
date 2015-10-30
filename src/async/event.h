@@ -4,8 +4,8 @@
 /// \version
 /// \date 2015-10-29
 
-#ifndef __ASYNC_EVENT_CALL_H__
-#define __ASYNC_EVENT_CALL_H__
+#ifndef __ASYNC_EVENT_H__
+#define __ASYNC_EVENT_H__
 
 #include "./looper.h"
 
@@ -16,10 +16,12 @@ typedef struct async_event *__FAR async_event_t;
 /// \brief 异步事件执行的函数类型.
 /// return ==0 取消当前异步事件回调.
 /// return !=0 继续等待事件.
-typedef char (*eventback_t)(void *__FAR dat);
+typedef char (*async_event_callback_t)(void *__FAR dat);
 
 
-#define ASYNC_EVENT_CALL_REGISTER_ERROR ((async_event_t)0)
+#define ASYNC_EVENT_REGISTER_ERROR ((async_event_t)0)
+
+#define ASYNC_TIMEOUT_NEVER ((async_timeout_t)-1)
 
 /// \brief async_event_register 注册一个异步事件执行回调.
 ///
@@ -28,7 +30,7 @@ typedef char (*eventback_t)(void *__FAR dat);
 /// \param dat 执行回调函数式传入的数据指针.
 ///
 /// \return 异步调用数据类型, 这个值用于后面的trigger来触发这个时间的执行.
-async_event_t async_event_register(async_looper_t looper, eventback_t cb, void *__FAR dat);
+async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat);
 
 /// \brief async_event_trigger 触发一个异步事件的执行.
 ///

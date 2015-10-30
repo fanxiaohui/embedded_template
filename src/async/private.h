@@ -2,6 +2,7 @@
 #define __ASYNC_PRIVATE_H__
 
 #include "./platform.h"
+#include "stdio.h"
 
 #ifndef ASYNC_LOOPER_SIZE
 #define ASYNC_LOOPER_SIZE 20
@@ -16,10 +17,16 @@
 #define ASYNC_EVENT_CALL_SIZE 20
 #endif
 
+
+#ifndef ASYNC_EVENT_SIZE
+#define ASYNC_EVENT_SIZE 20
+#endif
+
 #include "./async.h"
 #include "./looper.h"
 #include "./timer.h"
 #include "./event_call.h"
+#include "./event.h"
 
 #include <list/list.h>
 
@@ -30,13 +37,15 @@ struct async_sem_private {
     union {
         async_timer_t timer;
         async_event_call_t event_call;
+		async_event_t event;
     } data;
 };
 
 #define PRIVATE_SEM_TYPE_TRIGGER_EVENT_CALL 0
-#define PRIVATE_SEM_TYPE_ADD_EVENT_CALL 0
-#define PRIVATE_SEM_TYPE_ADD_TIMER 2
-#define PRIVATE_SEM_TYPE_EXIT 3
+#define PRIVATE_SEM_TYPE_ADD_EVENT_CALL 1
+#define PRIVATE_SEM_TYPE_ADD_EVENT 2
+#define PRIVATE_SEM_TYPE_ADD_TIMER 3
+#define PRIVATE_SEM_TYPE_EXIT 4
 
 void async_looper_init(void);
 char async_notify_loop(async_looper_t looper, const struct async_sem_private *priv);
@@ -50,9 +59,6 @@ async_timeout_t aasync_timer_add_timer(struct list_head *__FAR timers, async_tim
 void async_event_call_exec(struct list_head *__FAR event_calls, async_event_call_t event_call);
 
 
-void async_assert_info(const char *file, int line, const char *msg);
-
-#define ASYNC_ASSERT(condition, );
-#pragma DATA_SEG __RPAGE_SEG PAGED_RAM
+#define ASYNC_ASSERT(condition, fmt, args ...) do { if (condition) async_assert_info(__FILE__, __LINE__, fmt, ##args) } while (0)
 
 #endif

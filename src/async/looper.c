@@ -10,12 +10,13 @@
 
 struct async_looper {
     struct list_head head;
+	async_mutex_t lock;
     async_sem_t sem;
-    async_mutex_t lock;
-    ringbuffer_t rb;
+	ringbuffer_t rb;
     unsigned char buf[100];
-    struct list_head timers;
-    struct list_head event_calls;
+    struct list_head timer_list;
+    struct list_head trigger_list;
+    struct list_head timer_and_trigger_list;
 };
 
 static LIST_HEAD(used_list);
@@ -29,8 +30,9 @@ void async_looper_init(void) {
     int i;
     for (i = 0; i < ASYNC_LOOPER_SIZE; ++i) {
         INIT_LIST_HEAD(&looper_pool[i].head);
-        INIT_LIST_HEAD(&looper_pool[i].timers);
-        INIT_LIST_HEAD(&looper_pool[i].event_calls);
+        INIT_LIST_HEAD(&looper_pool[i].timer_list);
+        INIT_LIST_HEAD(&looper_pool[i].trigger_list);
+        INIT_LIST_HEAD(&looper_pool[i].timer_and_trigger_list);
         ringbuffer_init(&looper_pool[i].rb, looper_pool[i].buf, sizeof(looper_pool[i].buf));
         list_add(&looper_pool[i].head, &free_list);
     }
@@ -81,12 +83,12 @@ void async_looper_loop(async_looper_t looper) {
     unsigned char tmp;
     async_time_t pre_time;
     unsigned short escaped;
-    async_timeout_t wait_time = -1;
+    async_timeout_t wait_time = (async_timeout_t)-1;
 
     while (1) {
         pre_time = async_get_time();
         tmp = async_pend_sem(looper->sem, wait_time);
-        if (!tmp) {
+        if (!tmp) { //  timeout;
             goto __update_wait_time;
         } else {
             struct async_sem_private priv;
@@ -103,11 +105,11 @@ void async_looper_loop(async_looper_t looper) {
             }
 
             if (priv.type == PRIVATE_SEM_TYPE_TRIGGER_EVENT_CALL) {
-                async_event_call_exec(&looper->event_calls, priv.data.event_call);
+                //async_event_call_exec(&looper->event_calls, priv.data.event_call);
                 goto __update_wait_time;
             } else if (priv.type == PRIVATE_SEM_TYPE_ADD_TIMER) {
                 escaped = async_get_time() - pre_time;
-                wait_time = aasync_timer_add_timer(&looper->timers, priv.data.timer, escaped);
+//                wait_time = aasync_timer_add_timer(&looper->timers, priv.data.timer, escaped);
                 continue;
             } else if (priv.type == PRIVATE_SEM_TYPE_EXIT) {
                 return;
@@ -117,7 +119,7 @@ void async_looper_loop(async_looper_t looper) {
 __update_wait_time:
         escaped = async_get_time() - pre_time;
         if (wait_time <= escaped) {
-            wait_time = async_timer_exec(&looper->timers, escaped);
+//            wait_time = async_timer_exec(&looper->timers, escaped);
         } else {
             wait_time -= escaped;
         }

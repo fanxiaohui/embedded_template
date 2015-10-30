@@ -12,7 +12,7 @@ static LIST_HEAD(free_list);
 struct async_event {
     struct list_head head;
     async_looper_t looper;
-    eventback_t cb;
+    async_event_callback_t cb;
     async_timeout_t timeout;
     async_timeout_t escaped;
     void *__FAR dat;
@@ -28,14 +28,14 @@ void async_event_init(void) {
     }
 }
 
-async_event_t async_event_register(async_looper_t looper, eventback_t cb, async_timeout_t timeout, void *__FAR dat) {
+async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat) {
     async_event_t ret;
     struct async_sem_private priv;
 
     async_lock_mutex(async_g_lock);
     if (list_empty(&free_list)) {
         async_unlock_mutex(async_g_lock);
-        return ASYNC_EVENT_CALL_REGISTER_ERROR;
+        return ASYNC_EVENT_REGISTER_ERROR;
     }
 
     ret = (async_event_t)free_list.next;
@@ -47,7 +47,7 @@ async_event_t async_event_register(async_looper_t looper, eventback_t cb, async_
     ret->looper = looper;
     ret->timeout = timeout;
 
-    priv.type = PRIVATE_SEM_TYPE_ADD_EVENT_CALL;
+    priv.type = PRIVATE_SEM_TYPE_ADD_EVENT;
     priv.data.event = ret;
     if (async_notify_loop(looper, &priv)) { // OK
         return ret;
@@ -57,10 +57,10 @@ async_event_t async_event_register(async_looper_t looper, eventback_t cb, async_
     async_lock_mutex(async_g_lock);
     list_add(&ret->head, &free_list);
     async_unlock_mutex(async_g_lock);
-    return ASYNC_EVENT_CALL_REGISTER_ERROR;
+    return ASYNC_EVENT_REGISTER_ERROR;
 }
 
-void async_event_exec(struct list_head *__FAR event, async_event_t event) {
+void async_event_exec(struct list_head *__FAR events, async_event_t event) {
     struct list_head *__FAR pos;
 
     list_for_each(pos, events) {
@@ -86,4 +86,5 @@ char async_event_trigger(async_event_t event) {
 
     return async_notify_loop(event->looper, &priv);
 }
+
 

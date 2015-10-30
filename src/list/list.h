@@ -3,8 +3,6 @@
 
 #include "stddef.h"
 
-#define inline
-
 
 #ifndef __FAR
 #define __FAR

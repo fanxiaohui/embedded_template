@@ -11,7 +11,7 @@ static LIST_HEAD(free_list);
 
 struct async_event_call {
     struct list_head head;
-    event_callback_t cb;
+    async_event_callback_t cb;
     async_looper_t looper;
     void *__FAR dat;
 };
@@ -26,7 +26,7 @@ void async_event_call_init(void) {
     }
 }
 
-async_event_call_t async_event_call_register(async_looper_t looper, event_callback_t cb, void *__FAR dat) {
+async_event_call_t async_event_call_register(async_looper_t looper, async_event_callback_t cb, void *__FAR dat) {
     async_event_call_t ret;
     struct async_sem_private priv;
 
