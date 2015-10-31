@@ -62,14 +62,38 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_read(ringbuffer_t *__FAR rb, unsigned char *
     }
 
     for (i = 0; (i < len) && (rb->len > 0); ++i) {
-        if (0 != buf) {
-            *buf++ = rb->buf[rb->out];
-        }
+        *buf++ = rb->buf[rb->out];
         ++rb->out;
         if (rb->out >= rb->cap) {
             rb->out = 0;
         }
         --rb->len;
+    }
+
+    return i;
+}
+
+
+RINGBUFFER_SIZE_TYPE ringbuffer_try_read_util(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len, unsigned char term) {
+    RINGBUFFER_SIZE_TYPE i;
+    unsigned char c;
+
+    if (!RINGBUFFER_IS_VALID(rb)) {
+        return 0;
+    }
+
+    if (!buf) {
+        return 0;
+    }
+
+    for (i = 0; (i < len) && (rb->len > 0); ++i) {
+        c = rb->buf[rb->out];
+        ++rb->out;
+        if (rb->out >= rb->cap) {
+            rb->out = 0;
+        }
+        --rb->len;
+        if (c == term) { return i + 1; }
     }
 
     return i;

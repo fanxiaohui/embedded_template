@@ -123,6 +123,16 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_read(ringbuffer_t *__FAR rb, unsigned char *
 /// \return 返回读取的长度, 如果循环Buffer里面存数的数据 < 读取的长度, 将返回0, 循环Buffer里面的数据不会被读取.
 RINGBUFFER_SIZE_TYPE ringbuffer_read(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len);
 
+/// \brief ringbuffer_read 从循环Buffer读取指定长度的数据, 如果遇到指定字符, 提前退出.
+///
+/// \param rb 需要读取的循环Buffer.
+/// \param buf 用于保存读取的数据指针.
+/// \param len 读取的长度.
+/// \param term 遇到这个字符, 读取这个字符后退出.
+///
+/// \return 返回读取的长度, 如果循环Buffer里面存数的数据 < 读取的长度, 将返回0, 循环Buffer里面的数据不会被读取.
+RINGBUFFER_SIZE_TYPE ringbuffer_try_read_util(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len, unsigned char term);
+
 /// \brief ringbuffer_try_write 尝试向循环Buffer读取指定长度的数据.
 ///
 /// \param rb 需要写入的循环Buffer.

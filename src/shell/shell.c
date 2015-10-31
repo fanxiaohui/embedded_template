@@ -296,6 +296,8 @@ void getline(char *buf, int buf_size) {
     *buf = 0;
 }
 
+extern void shell_getline(char *buf, int buf_size);
+
 // Execute the eLua "shell" in an infinite loop
 void shell_loop(void) {
     char cmd[SHELL_MAXSIZE];
