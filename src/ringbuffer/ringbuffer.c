@@ -93,7 +93,9 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_read_util(ringbuffer_t *__FAR rb, unsigned c
             rb->out = 0;
         }
         --rb->len;
+		*buf = c;
         if (c == term) { return i + 1; }
+		++buf;
     }
 
     return i;

@@ -299,7 +299,7 @@ void getline(char *buf, int buf_size) {
 extern void shell_getline(char *buf, int buf_size);
 
 // Execute the eLua "shell" in an infinite loop
-void shell_loop(void) {
+void shell_loop(shell_get_line get_line, void *priv_data) {
     char cmd[SHELL_MAXSIZE];
     is_exit = 0;
 
@@ -310,7 +310,7 @@ void shell_loop(void) {
     while (!is_exit) {
         printf(SHELL_PROMPT);
         //fgets(cmd, SHELL_MAXSIZE, stdin);
-        getline(cmd, sizeof(cmd));
+        get_line(cmd, sizeof(cmd), priv_data);
         if (strlen(cmd) == 0) {
             continue;
         }
