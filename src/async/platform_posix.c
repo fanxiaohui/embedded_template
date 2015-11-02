@@ -19,12 +19,12 @@ char async_post_sem(async_sem_t sem) {
 
 char async_pend_sem(async_sem_t sem, async_timeout_t timeout) {
     struct timespec to;
-    
+
     clock_gettime(CLOCK_REALTIME, &to);
-    
+
     to.tv_nsec += (timeout % 1000) * 1e6;
     to.tv_sec += timeout / 1000;
-    
+
     if (to.tv_nsec >= 1e9) {
         to.tv_nsec -= 1e9;
         to.tv_sec += 1;

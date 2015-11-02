@@ -22,7 +22,11 @@ async_looper_t async_looper_create(void);
 /// \brief async_looper_loop 执行异步循环, 这个函数在async_looper_exit之前不会返回.
 ///
 /// \param looper 需要执行的异步循环.
+#if ASYNC_LOOPER_SIZE>1
 void async_looper_loop(async_looper_t looper);
+#else
+void async_looper_loop(void);
+#endif
 
 /// \brief async_looper_exit 退出异步循环.
 ///

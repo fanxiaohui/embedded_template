@@ -28,7 +28,11 @@ typedef char (*async_event_callback_t)(async_event_t event);
 /// \param dat 执行回调函数式传入的数据指针.
 ///
 /// \return 异步调用数据类型, 这个值用于后面的trigger来触发这个时间的执行.
+#if ASYNC_LOOPER_SIZE>1
 async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat);
+#else
+async_event_t async_event_register(async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat);
+#endif
 
 
 /// \brief async_event_trigger 触发一个异步事件的执行.

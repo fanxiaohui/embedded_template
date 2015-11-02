@@ -42,14 +42,15 @@ struct async_looper_command {
 #define LOOPER_COMMAND_TYPE_EXIT 13
 
 void async_looper_init(void);
+#if ASYNC_LOOPER_SIZE>1
 char async_notify_loop(async_looper_t looper, const struct async_looper_command *cmd);
+#else
+char async_notify_loop(const struct async_looper_command *cmd);
+#endif
 
 void async_event_init(void);
 async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list, async_timeout_t escaped_offset);
-
-void async_assert_info(const char *file, int line, const char *msg);
-
-//#define ASYNC_ASSERT(condition, );
-#pragma DATA_SEG __RPAGE_SEG PAGED_RAM
+async_timeout_t async_event_exec_timeout(struct list_head *__FAR events, async_timeout_t escaped);
+async_timeout_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events, async_timeout_t escaped_offset);
 
 #endif

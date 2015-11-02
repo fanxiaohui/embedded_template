@@ -15,7 +15,9 @@ struct async_event {
     async_event_callback_t cb;
     async_timeout_t timeout;
     async_timeout_t timeout_left;
+#if ASYNC_LOOPER_SIZE>1
     async_looper_t looper;
+#endif
     void *__FAR dat;
 };
 
@@ -29,7 +31,11 @@ void async_event_init(void) {
     }
 }
 
+#if ASYNC_LOOPER_SIZE>1
 async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat) {
+#else
+async_event_t async_event_register(async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat) {
+#endif
     async_event_t ret;
     struct async_looper_command priv;
 
@@ -42,15 +48,21 @@ async_event_t async_event_register(async_looper_t looper, async_event_callback_t
     ret = (async_event_t)free_list.next;
     list_del(&ret->head);
     async_unlock_mutex(async_g_lock);
-
     ret->cb = cb;
     ret->dat = dat;
+#if ASYNC_LOOPER_SIZE>1
     ret->looper = looper;
+#endif
     ret->timeout = timeout;
 
     priv.type = LOOPER_COMMAND_TYPE_ADD_EVENT;
     priv.data.event = ret;
+
+#if ASYNC_LOOPER_SIZE>1
     if (async_notify_loop(looper, &priv)) { // OK
+#else
+    if (async_notify_loop(&priv)) { // OK
+#endif
         return ret;
     }
 
@@ -68,7 +80,6 @@ async_timeout_t async_event_exec_timeout(struct list_head *__FAR events, async_t
     struct list_head *__FAR n;
 
     async_timeout_t min = ASYNC_TIMEOUT_FOREVER;
-
 
     list_for_each_safe(pos, n, events) {
         event = (async_event_t)pos;
@@ -88,13 +99,19 @@ async_timeout_t async_event_exec_timeout(struct list_head *__FAR events, async_t
                     min = event->timeout;
                 }
             }
+            continue;
+        }
+
+        event->timeout_left -= escaped;
+        if (event->timeout_left < min) {
+            min = event->timeout_left;
         }
     }
 
     return min;
 }
 
-async_timeout_t async_event_exec_trigger(struct list_head *__FAR events, async_event_t event) {
+async_timeout_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events, async_timeout_t escaped_offset) {
     char rc;
     struct list_head *__FAR pos;
     struct list_head *__FAR n;
@@ -112,7 +129,7 @@ async_timeout_t async_event_exec_trigger(struct list_head *__FAR events, async_e
             async_unlock_mutex(async_g_lock);
             return ASYNC_TIMEOUT_FOREVER;
         }
-        event->timeout_left = event->timeout;
+        event->timeout_left = event->timeout + escaped_offset;
         return event->timeout;
     }
     return ASYNC_TIMEOUT_FOREVER;
@@ -124,7 +141,12 @@ char async_event_trigger(async_event_t event) {
     priv.type = LOOPER_COMMAND_TYPE_TRIGGER_CALL;
     priv.data.event = event;
 
+
+#if ASYNC_LOOPER_SIZE>1
     return async_notify_loop(event->looper, &priv);
+#else
+    return async_notify_loop(&priv);
+#endif
 }
 
 async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list, async_timeout_t escaped_offset) {

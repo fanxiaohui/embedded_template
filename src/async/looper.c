@@ -15,33 +15,34 @@ struct async_looper {
     async_mutex_t lock;
     ringbuffer_t rb;
     unsigned char buf[100];
-    struct list_head timers;
-    struct list_head event_calls;
     struct list_head events;
 };
 
+#if ASYNC_LOOPER_SIZE>1
 static LIST_HEAD(used_list);
 static LIST_HEAD(free_list);
-
-async_looper_t async_looper_create(void);
-
 struct async_looper looper_pool[ASYNC_LOOPER_SIZE];
+#else
+#define looper_pool looper
+struct async_looper looper[ASYNC_LOOPER_SIZE];
+#endif
 
 void async_looper_init(void) {
     int i;
     for (i = 0; i < ASYNC_LOOPER_SIZE; ++i) {
         INIT_LIST_HEAD(&looper_pool[i].head);
-        INIT_LIST_HEAD(&looper_pool[i].timers);
-        INIT_LIST_HEAD(&looper_pool[i].event_calls);
         INIT_LIST_HEAD(&looper_pool[i].events);
         ringbuffer_init(&looper_pool[i].rb, looper_pool[i].buf, sizeof(looper_pool[i].buf));
+#if ASYNC_LOOPER_SIZE>1
         list_add(&looper_pool[i].head, &free_list);
+#endif
     }
 }
 
 async_looper_t async_looper_create(void) {
-    async_looper_t ret;
 
+#if ASYNC_LOOPER_SIZE>1
+    async_looper_t ret;
     async_lock_mutex(async_g_lock);
     if (list_empty(&free_list)) {
         async_unlock_mutex(async_g_lock);
@@ -56,9 +57,33 @@ async_looper_t async_looper_create(void) {
     ret->sem = async_create_sem();
 
     return ret;
+#else
+    if (looper->lock != NULL) { return NULL; }
+
+    looper->lock = async_create_mutex();
+    if (looper->lock == NULL) { goto __error; }
+    looper->sem = async_create_sem();
+    if (looper->sem == NULL) { goto __error; }
+    return looper;
+
+__error:
+    if (looper->lock != NULL) {
+        async_destroy_mutex(looper->lock);
+        looper->lock = NULL;
+    }
+    if (looper->sem != NULL) {
+        async_destroy_sem(looper->sem);
+        looper->sem = NULL;
+    }
+    return NULL;
+#endif
 }
 
+#if ASYNC_LOOPER_SIZE>1
 char async_notify_loop(async_looper_t looper, const struct async_looper_command *priv) {
+#else
+char async_notify_loop(const struct async_looper_command *priv) {
+#endif
     RINGBUFFER_SIZE_TYPE ret;
 
     async_lock_mutex(looper->lock);
@@ -77,68 +102,19 @@ char async_looper_exit(async_looper_t looper) {
 
     priv.type = LOOPER_COMMAND_TYPE_EXIT;
 
+#if ASYNC_LOOPER_SIZE>1
     return async_notify_loop(looper, &priv);
+#else
+    return async_notify_loop(&priv);
+#endif
 }
-/*
+
+#if ASYNC_LOOPER_SIZE>1
 void async_looper_loop(async_looper_t looper) {
-    unsigned char tmp;
-    async_time_t pre_time;
-    unsigned short escaped;
-    async_timeout_t wait_time = -1;
-
-    while (1) {
-        pre_time = async_get_time();
-        tmp = async_pend_sem(looper->sem, wait_time);
-        if (!tmp) {
-            goto __update_wait_time;
-        } else {
-            struct async_looper_command priv;
-            async_lock_mutex(looper->lock);
-            tmp = ringbuffer_read(&(looper->rb), (unsigned char *__FAR)&priv, sizeof(priv));
-            async_unlock_mutex(looper->lock);
-
-            if (tmp != sizeof(priv)) {
-                async_lock_mutex(looper->lock);
-                ringbuffer_clear(&(looper->rb));
-                async_clear_sem(looper->sem);
-                async_unlock_mutex(looper->lock);
-                goto __update_wait_time;
-            }
-
-            if (priv.type == PRIVATE_SEM_TYPE_TRIGGER_EVENT_CALL) {
-                async_event_call_exec(&looper->event_calls, priv.data.event_call);
-                goto __update_wait_time;
-            } else if (priv.type == PRIVATE_SEM_TYPE_ADD_TIMER) {
-                escaped = async_get_time() - pre_time;
-                wait_time = aasync_timer_add_timer(&looper->timers, priv.data.timer, escaped);
-                continue;
-            } else if (priv.type == PRIVATE_SEM_TYPE_EXIT) {
-                return;
-            }
-
-            if (priv.type == LOOPER_COMMAND_TYPE_TRIGGER_CALL) {
-            } else if (priv.type == LOOPER_COMMAND_TYPE_ADD_EVENT) {
-                async_event_t event = priv.data.event;
-                event->timeout_left = event->timeout;
-                async_event_add_to_looper(priv.data.event, looper);
-            }
-        }
-__update_wait_time:
-        escaped = async_get_time() - pre_time;
-        if (wait_time <= escaped) {
-            wait_time = async_timer_exec(&looper->timers, escaped);
-        } else {
-            wait_time -= escaped;
-        }
-    }
-}
-*/
-
-
-
-void async_looper_loop(async_looper_t looper) {
-    unsigned char rc;
-    async_timeout_t wait_time = -1;
+#else
+void async_looper_loop(void) {
+#endif
+    async_timeout_t wait_time = ASYNC_TIMEOUT_FOREVER;
     struct async_looper_command cmd;
 
     async_time_t now = async_get_time();
@@ -155,7 +131,7 @@ void async_looper_loop(async_looper_t looper) {
             wait_time = 0;
             continue;
         }
-        
+
         // µÈ´ý³¬Ê±.
         escaped = async_get_time() - now;
         if (escaped >= wait_time) {
@@ -174,12 +150,14 @@ void async_looper_loop(async_looper_t looper) {
         async_unlock_mutex(looper->lock);
 
         if (cmd.type == LOOPER_COMMAND_TYPE_TRIGGER_CALL) {
+            async_timeout_t this_wait_time = async_event_exec_trigger(cmd.data.event, &looper->events, async_get_time() - last_time);
+            if (this_wait_time < wait_time) { wait_time = this_wait_time; }
             continue;
         }
 
         if (cmd.type == LOOPER_COMMAND_TYPE_ADD_EVENT) {
             async_timeout_t this_wait_time = async_event_add_to_looper_event_list(cmd.data.event, &looper->events, async_get_time() - last_time);
-            if (this_wait_time < wait_time) wait_time = this_wait_time;
+            if (this_wait_time < wait_time) { wait_time = this_wait_time; }
             continue;
         }
     }

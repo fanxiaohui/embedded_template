@@ -7,12 +7,17 @@
 #ifndef __ASYNC_PLATFORM_H__
 #define __ASYNC_PLATFORM_H__
 
+#if defined(__FREERTOS__)
+#include "./platform_freertos.h"
+#endif
+
 #if defined(__linux__) || defined(__WIN32__)
 #include "./platform_posix.h"
 #endif
 
+/*
 /// \brief async_assert_info 断言输出.
-/// 
+///
 /// \param file 源文件路径.
 /// \param line 行号.
 /// \param msg 信息.
@@ -68,6 +73,7 @@ void async_unlock_mutex(async_mutex_t mutex);
 /// \return 系统时间.
 /// \note 这个值得绝对值无所谓, 但是以ms为单位递增.
 async_time_t async_get_time(void);
+*/
 
 #ifndef __FAR
 #define __FAR
