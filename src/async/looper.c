@@ -160,6 +160,11 @@ void async_looper_loop(void) {
             if (this_wait_time < wait_time) { wait_time = this_wait_time; }
             continue;
         }
+
+        if (cmd.type == LOOPER_COMMAND_TYPE_CANCEL_EVENT) {
+            async_event_remove_frome_looper_event_list(cmd.data.event, &looper->events);
+            continue;
+        }
     }
 }
 

@@ -25,9 +25,9 @@ typedef char (*async_event_callback_t)(async_event_t event);
 ///
 /// \param looper 注册到这个LOOPER中执行.
 /// \param cb 事件发生时执行的回调函数.
-/// \param dat 执行回调函数式传入的数据指针.
+/// \param dat 调用回调函数式传入的用户数据指针.
 ///
-/// \return 异步调用数据类型, 这个值用于后面的trigger来触发这个时间的执行.
+/// \return 异步调用数据类型, 这个值用于后面的trigger来触发这个事件的执行.
 #if ASYNC_LOOPER_SIZE>1
 async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat);
 #else
@@ -43,29 +43,31 @@ async_event_t async_event_register(async_event_callback_t cb, async_timeout_t ti
 /// \return !=0 触发成功.
 char async_event_trigger(async_event_t event);
 
-/// \brief async_event_set_callback 设置定时器调用的函数.
+/// \brief async_event_set_callback 设置事件的函数.
 ///
-/// \param event 定时器.
+/// \param event 事件.
 /// \param cb 回调函数.
 void async_event_set_callback(async_event_t event, async_event_callback_t cb);
 
-/// \brief async_event_set_data 设置定时器的用户数据.
+/// \brief async_event_set_data 设置事件的用户数据.
 ///
-/// \param event 定时器.
+/// \param event 事件.
 /// \param dat 用户数据.
 void async_event_set_data(async_event_t event, void *__FAR dat);
 
-/// \brief async_event_get_data 获取定时器的用户数据.
+/// \brief async_event_get_data 获取事件的用户数据.
 ///
-/// \param event 定时器.
+/// \param event 事件.
 ///
 /// \return 用户数据.
 void *__FAR async_event_get_data(async_event_t event);
 
-/// \brief async_event_cancel 删除一个定时器.
+/// \brief async_event_cancel 删除一个事件.
 ///
-/// \param event 定时器.
-void async_event_cancel(async_event_t event);
+/// \param event 事件.
+/// \return ==0 删除失败.
+/// \return !=0 删除成功.
+char async_event_cancel(async_event_t event);
 
 #endif
 

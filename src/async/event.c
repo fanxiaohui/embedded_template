@@ -21,11 +21,11 @@ struct async_event {
     void *__FAR dat;
 };
 
-static struct async_event events_pool[ASYNC_EVENT_CALL_SIZE];
+static struct async_event events_pool[ASYNC_EVENT_SIZE];
 
 void async_event_init(void) {
     int i;
-    for (i = 0; i < ASYNC_EVENT_CALL_SIZE; ++i) {
+    for (i = 0; i < ASYNC_EVENT_SIZE; ++i) {
         INIT_LIST_HEAD(&events_pool[i].head);
         list_add(&events_pool[i].head, &free_list);
     }
@@ -88,6 +88,7 @@ async_timeout_t async_event_exec_timeout(struct list_head *__FAR events, async_t
         }
 
         if (event->timeout_left <= escaped) {
+            event->timeout_left = 0;
             rc = event->cb(event);
             if (rc == 0) {
                 async_lock_mutex(async_g_lock);
@@ -141,7 +142,6 @@ char async_event_trigger(async_event_t event) {
     priv.type = LOOPER_COMMAND_TYPE_TRIGGER_CALL;
     priv.data.event = event;
 
-
 #if ASYNC_LOOPER_SIZE>1
     return async_notify_loop(event->looper, &priv);
 #else
@@ -167,6 +167,20 @@ async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct
     return event->timeout;
 }
 
+void async_event_remove_frome_looper_event_list(async_event_t event, struct list_head *__FAR list) {
+    struct list_head *__FAR pos;
+    struct list_head *__FAR n;
+
+    list_for_each_safe(pos, n, list) {
+        if (pos == &event->head) {
+            async_lock_mutex(async_g_lock);
+            list_move(&event->head, &free_list);
+            async_unlock_mutex(async_g_lock);
+            break;
+        }
+    }
+}
+
 void async_event_set_callback(async_event_t event, async_event_callback_t cb) {
     event->cb = cb;
 }
@@ -179,6 +193,20 @@ void *__FAR async_event_get_data(async_event_t event) {
     return event->dat;
 }
 
-void async_event_cancel(async_event_t event) {
+char async_event_is_timeout(async_event_t event) {
+    return event->timeout_left == 0;
+}
+
+char async_event_cancel(async_event_t event) {
+    struct async_looper_command priv;
+
+    priv.type = LOOPER_COMMAND_TYPE_CANCEL_EVENT;
+    priv.data.event = event;
+
+#if ASYNC_LOOPER_SIZE>1
+    return async_notify_loop(event->looper, &priv);
+#else
+    return async_notify_loop(&priv);
+#endif
 }
 

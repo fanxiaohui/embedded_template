@@ -2,8 +2,6 @@ add_library(
     async
     async.c
     looper.c
-    # event_call.c
-    # timer.c
     event.c
     platform_posix.c
 )
