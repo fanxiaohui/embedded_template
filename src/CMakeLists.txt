@@ -7,11 +7,11 @@ add_subdirectory(async)
 add_subdirectory(ringbuffer)
 
 add_executable(
-    aa
-    main.c
+    async_example
+    async_example.c
 )
 target_link_libraries(
-    aa
+    async_example
     async
     ringbuffer
     pthread
