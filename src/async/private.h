@@ -3,14 +3,6 @@
 
 #include "./platform.h"
 
-#ifndef ASYNC_LOOPER_SIZE
-#define ASYNC_LOOPER_SIZE 20
-#endif
-
-#ifndef ASYNC_EVENT_SIZE
-#define ASYNC_EVENT_SIZE 20
-#endif
-
 #include "./async.h"
 #include "./looper.h"
 #include "./event.h"
@@ -39,7 +31,8 @@ char async_notify_loop(const struct async_looper_command *cmd);
 
 void async_event_init(void);
 async_timeout_t async_event_exec_timeout(struct list_head *__FAR events, async_timeout_t escaped);
-void async_event_remove_frome_looper_event_list(async_event_t event, struct list_head *__FAR list);
+void async_event_free_from_looper_event_list(async_event_t event, struct list_head *__FAR list);
+void async_event_free_all(struct list_head *events);
 async_timeout_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events, async_timeout_t escaped_offset);
 async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list, async_timeout_t escaped_offset);
 

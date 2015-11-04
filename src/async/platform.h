@@ -75,6 +75,15 @@ void async_unlock_mutex(async_mutex_t mutex);
 async_time_t async_get_time(void);
 */
 
+
+#ifndef ASYNC_LOOPER_SIZE
+#define ASYNC_LOOPER_SIZE 20
+#endif
+
+#ifndef ASYNC_EVENT_SIZE
+#define ASYNC_EVENT_SIZE 20
+#endif
+
 #ifndef __FAR
 #define __FAR
 #endif

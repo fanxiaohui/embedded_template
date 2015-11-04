@@ -34,7 +34,11 @@ void async_looper_loop(void);
 ///
 /// \return 0 退出失败.
 /// \return !=0 退出成功.
+#if ASYNC_LOOPER_SIZE>1
 char async_looper_exit(async_looper_t looper);
+#else
+char async_looper_exit(void);
+#endif
 
 #endif
 

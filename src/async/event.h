@@ -69,5 +69,9 @@ void *__FAR async_event_get_data(async_event_t event);
 /// \return !=0 É¾³ý³É¹¦.
 char async_event_cancel(async_event_t event);
 
+#if ASYNC_LOOPER_SIZE>1
+async_looper_t async_event_get_looper(async_event_t event);
+#endif
+
 #endif
 

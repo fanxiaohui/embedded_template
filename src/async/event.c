@@ -167,7 +167,7 @@ async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct
     return event->timeout;
 }
 
-void async_event_remove_frome_looper_event_list(async_event_t event, struct list_head *__FAR list) {
+void async_event_free_from_looper_event_list(async_event_t event, struct list_head *__FAR list) {
     struct list_head *__FAR pos;
     struct list_head *__FAR n;
 
@@ -179,6 +179,12 @@ void async_event_remove_frome_looper_event_list(async_event_t event, struct list
             break;
         }
     }
+}
+
+void async_event_free_all(struct list_head *events) {
+    async_lock_mutex(async_g_lock);
+    list_splice_init(events, &free_list);
+    async_unlock_mutex(async_g_lock);
 }
 
 void async_event_set_callback(async_event_t event, async_event_callback_t cb) {
@@ -209,4 +215,10 @@ char async_event_cancel(async_event_t event) {
     return async_notify_loop(&priv);
 #endif
 }
+
+#if ASYNC_LOOPER_SIZE>1
+async_looper_t async_event_get_looper(async_event_t event) {
+    return event->looper;
+}
+#endif
 
