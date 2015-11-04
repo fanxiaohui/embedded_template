@@ -191,6 +191,11 @@ void async_event_set_callback(async_event_t event, async_event_callback_t cb) {
     event->cb = cb;
 }
 
+
+void async_event_set_timeout(async_event_t event, async_timeout_t timeout) {
+    event->timeout = timeout;
+}
+
 void async_event_set_data(async_event_t event, void *__FAR dat) {
     event->dat = dat;
 }

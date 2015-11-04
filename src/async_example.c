@@ -6,10 +6,20 @@
 
 char hello_world(async_event_t e) {
     int *p = async_event_get_data(e);
-    printf("hello world: %d, now is %d\n", (*p)++, async_get_time());
-    if ((*p) > 3) {
-        async_looper_exit(async_event_get_looper(e));
-    }
+    ptintf("%s(%d): Hello %d, \n, now is %u\n", __func__, __LINE__, (*p)++, async_get_time());
+    return 1;
+}
+
+char hello_after_immediatly(async_event_t e) {
+    static int i = 0;
+    printf("%s(%d): Hello %d, \n, now is %u\n", __func__, __LINE__, i++, async_get_time());
+    return i <= 10;
+}
+
+char hello_immediatly(async_event_t e) {
+    async_event_set_callback(e, hello_after_immediatly);
+    async_event_set_timeout(e, 1200);
+    hello_after_immediatly(e);
     return 1;
 }
 
@@ -18,6 +28,7 @@ int main(int argc, char **argv) {
     async_init();
     async_looper_t looper = async_looper_create();
     async_event_register(looper, hello_world, 1000, &i);
+    async_event_register(looper, hello_immediatly, 0, 0);
     async_looper_loop(looper);
     return 0;
 }

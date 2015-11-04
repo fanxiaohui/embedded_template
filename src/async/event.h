@@ -43,6 +43,12 @@ async_event_t async_event_register(async_event_callback_t cb, async_timeout_t ti
 /// \return !=0 触发成功.
 char async_event_trigger(async_event_t event);
 
+/// \brief async_event_set_timeout 设置事件的超时时间.
+///
+/// \param event 事件.
+/// \param timeout 超时时间.
+void async_event_set_timeout(async_event_t event, async_timeout_t timeout);
+
 /// \brief async_event_set_callback 设置事件的函数.
 ///
 /// \param event 事件.
