@@ -1,5 +1,4 @@
 #include "shell_private.h"
-#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
@@ -19,32 +18,6 @@
 #define SHELL_MAX_ARGS            10
 
 static unsigned char is_exit;
-
-char shell_ask_yes_no(const char *prompt) {
-    int c;
-
-    while (1) {
-        if (prompt) {
-            printf("%s\n", prompt);
-        }
-
-        printf("Yes or No? [YN]:");
-        c = fgetc(stdin);
-        fputc(c, stdout);
-
-        if (c == 'y' || c == 'Y') {
-            printf("y\n");
-            return 1;
-        }
-        if (c == 'n' || c == 'N') {
-            printf("n\n");
-            return 0;
-        }
-
-        printf("\nYou must input 'Y' nor 'N'\n");
-    }
-}
-
 
 // 'Not implemented' handler for shell comands
 void shellh_not_implemented_handler(int argc, char **argv) {
@@ -142,8 +115,6 @@ static const shell_command_t *shell_execute_command_in_commands(const shell_comm
     const shell_command_t *pcmd;
     for (pcmd = cmds; pcmd->cmd != NULL; ++pcmd) {
         if (!strcasecmp(pcmd->cmd, argv[ 0 ])) {
-            // Special case: the "exit" command has a NULL handler
-            // Special case: "lua" is not allowed in non-interactive mode
             pcmd->handler(argc, argv);
             return pcmd;
         }
@@ -268,6 +239,7 @@ void shell_execute_command(char *cmd) {
     printf("Command \"%s\" cannot be found.\n", argv[0]);
 }
 
+/*
 void getline(char *buf, int buf_size) {
     int i;
     int c;
@@ -295,6 +267,7 @@ void getline(char *buf, int buf_size) {
 
     *buf = 0;
 }
+*/
 
 extern void shell_getline(char *buf, int buf_size);
 
