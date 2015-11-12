@@ -42,7 +42,7 @@ typedef struct ringbuffer *__FAR ringbuffer_t;
 #if RINGBUFFER_CHECK != 0
 #define RINGBUFFER_DEFINE_STATIC(name, size)  \
 static unsigned char __##name##_buffer[size]; \
-static struct ring_buffer name = {            \
+static struct ringbuffer name = {            \
     (unsigned long)RINGBUFFER_CHECK_MAGIC,    \
     size,                                     \
     0,                                        \
@@ -53,7 +53,7 @@ static struct ring_buffer name = {            \
 #else
 #define RINGBUFFER_DEFINE_STATIC(name, size)  \
 static unsigned char __##name##_buffer[size]; \
-static struct ring_buffer name = {            \
+static struct ringbuffer name = {            \
     size,                                     \
     0,                                        \
     0,                                        \
