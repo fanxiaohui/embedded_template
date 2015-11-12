@@ -8,11 +8,10 @@
 #include <time.h>
 
 typedef sem_t *async_sem_t;
-typedef uint32_t async_timeout_t;
 typedef pthread_mutex_t *async_mutex_t;
 typedef uint32_t async_time_t;
 
-#define ASYNC_TIMEOUT_FOREVER ((async_timeout_t)(0xFFFFFFFF))
+#define ASYNC_TIME_FOREVER ((async_time_t)(0xFFFFFFFF))
 
 extern struct timespec otime;
 
@@ -30,7 +29,7 @@ static inline char async_post_sem(async_sem_t sem) {
     return 0 == sem_post(sem);
 }
 
-static inline char async_pend_sem(async_sem_t sem, async_timeout_t timeout) {
+static inline char async_pend_sem(async_sem_t sem, async_time_t timeout) {
     struct timespec to;
 
     clock_gettime(CLOCK_REALTIME, &to);

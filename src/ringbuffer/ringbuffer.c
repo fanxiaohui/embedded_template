@@ -12,7 +12,7 @@
 #define RINGBUFFER_IS_VALID(rb) (0 != (rb))
 #endif
 
-void ringbuffer_clear(ringbuffer_t *__FAR rb) {
+void ringbuffer_clear(ringbuffer_t rb) {
     if (!RINGBUFFER_IS_VALID(rb)) {
         return;
     }
@@ -22,7 +22,7 @@ void ringbuffer_clear(ringbuffer_t *__FAR rb) {
     rb->out = 0;
 }
 
-void ringbuffer_init(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
+void ringbuffer_init(ringbuffer_t rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
 #if RINGBUFFER_CHECK
     rb->magic = RINGBUFFER_CHECK_MAGIC;
 #endif
@@ -33,7 +33,7 @@ void ringbuffer_init(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFE
     rb->cap = len;
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_put(ringbuffer_t *__FAR rb, unsigned char uch, RINGBUFFER_SIZE_TYPE len) {
+RINGBUFFER_SIZE_TYPE ringbuffer_put(ringbuffer_t rb, unsigned char uch, RINGBUFFER_SIZE_TYPE len) {
     RINGBUFFER_SIZE_TYPE i;
 
     if (!RINGBUFFER_IS_VALID(rb)) {
@@ -50,7 +50,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_put(ringbuffer_t *__FAR rb, unsigned char uch, R
     return i;
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_try_read(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
+RINGBUFFER_SIZE_TYPE ringbuffer_try_read(ringbuffer_t rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
     RINGBUFFER_SIZE_TYPE i;
 
     if (!RINGBUFFER_IS_VALID(rb)) {
@@ -74,7 +74,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_read(ringbuffer_t *__FAR rb, unsigned char *
 }
 
 
-RINGBUFFER_SIZE_TYPE ringbuffer_try_read_util(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len, unsigned char term) {
+RINGBUFFER_SIZE_TYPE ringbuffer_try_read_util(ringbuffer_t rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len, unsigned char term) {
     RINGBUFFER_SIZE_TYPE i;
     unsigned char c;
 
@@ -101,7 +101,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_read_util(ringbuffer_t *__FAR rb, unsigned c
     return i;
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_try_write(ringbuffer_t *__FAR rb, const unsigned char *__FAR dat, RINGBUFFER_SIZE_TYPE len) {
+RINGBUFFER_SIZE_TYPE ringbuffer_try_write(ringbuffer_t rb, const unsigned char *__FAR dat, RINGBUFFER_SIZE_TYPE len) {
     RINGBUFFER_SIZE_TYPE i;
 
     if (!RINGBUFFER_IS_VALID(rb)) {
@@ -122,7 +122,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_write(ringbuffer_t *__FAR rb, const unsigned
     return i;
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_read(ringbuffer_t *__FAR rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
+RINGBUFFER_SIZE_TYPE ringbuffer_read(ringbuffer_t rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }
@@ -134,7 +134,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_read(ringbuffer_t *__FAR rb, unsigned char *__FA
     return ringbuffer_try_read(rb, buf, len);
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_write(ringbuffer_t *__FAR rb, const unsigned char *__FAR dat, RINGBUFFER_SIZE_TYPE len) {
+RINGBUFFER_SIZE_TYPE ringbuffer_write(ringbuffer_t rb, const unsigned char *__FAR dat, RINGBUFFER_SIZE_TYPE len) {
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }
@@ -146,7 +146,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_write(ringbuffer_t *__FAR rb, const unsigned cha
     return ringbuffer_try_write(rb, dat, len);
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_get_left_space(const ringbuffer_t *__FAR rb) {
+RINGBUFFER_SIZE_TYPE ringbuffer_get_left_space(const ringbuffer_t rb) {
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }
@@ -154,7 +154,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_get_left_space(const ringbuffer_t *__FAR rb) {
     return (rb->cap - rb->len);
 }
 
-static unsigned char pop_char(ringbuffer_t *__FAR rb, char *__FAR pc) {
+static unsigned char pop_char(ringbuffer_t rb, char *__FAR pc) {
     if (rb->len == 0) {
         return 0;
     }
@@ -165,7 +165,7 @@ static unsigned char pop_char(ringbuffer_t *__FAR rb, char *__FAR pc) {
     --rb->len;
     return 1;
 }
-RINGBUFFER_SIZE_TYPE ringbuffer_read_string(ringbuffer_t *__FAR rb, char *__FAR buf, RINGBUFFER_SIZE_TYPE bufSize) {
+RINGBUFFER_SIZE_TYPE ringbuffer_read_string(ringbuffer_t rb, char *__FAR buf, RINGBUFFER_SIZE_TYPE bufSize) {
     char chr;
     RINGBUFFER_SIZE_TYPE ret = 0;
 
@@ -185,7 +185,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_read_string(ringbuffer_t *__FAR rb, char *__FAR 
     return ret;
 }
 
-char ringbuffer_read_string_and_is_with_prefix(ringbuffer_t *__FAR rb, const char *__FAR prefix, char *__FAR buf, RINGBUFFER_SIZE_TYPE *__FAR size) {
+char ringbuffer_read_string_and_is_with_prefix(ringbuffer_t rb, const char *__FAR prefix, char *__FAR buf, RINGBUFFER_SIZE_TYPE *__FAR size) {
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }
@@ -234,7 +234,7 @@ char ringbuffer_read_string_and_is_with_prefix(ringbuffer_t *__FAR rb, const cha
     }
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_drop_from_tail(ringbuffer_t *__FAR rb, RINGBUFFER_SIZE_TYPE size) {
+RINGBUFFER_SIZE_TYPE ringbuffer_drop_from_tail(ringbuffer_t rb, RINGBUFFER_SIZE_TYPE size) {
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }
@@ -255,7 +255,7 @@ RINGBUFFER_SIZE_TYPE ringbuffer_drop_from_tail(ringbuffer_t *__FAR rb, RINGBUFFE
     return size;
 }
 
-RINGBUFFER_SIZE_TYPE ringbuffer_drop_from_head(ringbuffer_t *__FAR rb, RINGBUFFER_SIZE_TYPE size) {
+RINGBUFFER_SIZE_TYPE ringbuffer_drop_from_head(ringbuffer_t rb, RINGBUFFER_SIZE_TYPE size) {
     if (!RINGBUFFER_IS_VALID(rb)) {
         return 0;
     }

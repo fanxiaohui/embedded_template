@@ -6,13 +6,13 @@
 
 char hello_world(async_event_t e) {
     int *p = async_event_get_data(e);
-    ptintf("%s(%d): Hello %d, \n, now is %u\n", __func__, __LINE__, (*p)++, async_get_time());
+    printf("%s(%d): Hello %d, now is %u\n", __func__, __LINE__, (*p)++, async_get_time());
     return 1;
 }
 
 char hello_after_immediatly(async_event_t e) {
     static int i = 0;
-    printf("%s(%d): Hello %d, \n, now is %u\n", __func__, __LINE__, i++, async_get_time());
+    printf("%s(%d): Hello %d, now is %u\n", __func__, __LINE__, i++, async_get_time());
     return i <= 10;
 }
 

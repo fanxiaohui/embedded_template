@@ -10,10 +10,9 @@
 typedef SemaphoreHandle_t *async_sem_t;
 typedef QueueHandle_t async_queue_t;
 typedef SemaphoreHandle_t *async_mutex_t;
-typedef uint32_t async_timeout_t;
 typedef uint32_t async_time_t;
 
-#define ASYNC_TIMEOUT_FOREVER ((async_timeout_t)0xFFFFFFFFUL)
+#define ASYNC_TIME_FOREVER ((async_time_t)0xFFFFFFFFUL)
 
 /// \brief async_assert_info 断言输出.
 ///
@@ -55,8 +54,8 @@ static inline char async_post_sem(async_sem_t sem) {
 ///
 /// \return !=0 等待成功.
 /// \return ==0 等待超时.
-//char async_pend_sem(async_sem_t sem, async_timeout_t timeout);
-static inline char async_pend_sem(async_sem_t sem, async_timeout_t timeout) {
+//char async_pend_sem(async_sem_t sem, async_time_t timeout);
+static inline char async_pend_sem(async_sem_t sem, async_time_t timeout) {
     return pdFALSE != xSemaphoreTake(sem, timeout * configTICK_RATE_HZ / 1000);
 }
 

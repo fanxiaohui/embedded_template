@@ -30,10 +30,10 @@ char async_notify_loop(const struct async_looper_command *cmd);
 #endif
 
 void async_event_init(void);
-async_timeout_t async_event_exec_timeout(struct list_head *__FAR events, async_timeout_t escaped);
+async_time_t async_event_exec_timeout(struct list_head *__FAR events);
 void async_event_free_from_looper_event_list(async_event_t event, struct list_head *__FAR list);
 void async_event_free_all(struct list_head *events);
-async_timeout_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events, async_timeout_t escaped_offset);
-async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list, async_timeout_t escaped_offset);
+async_time_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events);
+async_time_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list);
 
 #endif

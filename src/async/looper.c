@@ -15,7 +15,7 @@ struct async_looper {
 #endif
     async_sem_t sem;
     async_mutex_t lock;
-    ringbuffer_t rb;
+    struct ringbuffer rb;
     unsigned char buf[100];
     struct list_head events;
 };
@@ -151,31 +151,32 @@ void async_looper_loop(async_looper_t looper) {
 #else
 void async_looper_loop(void) {
 #endif
-    async_timeout_t wait_time = ASYNC_TIMEOUT_FOREVER;
+    async_time_t now;
+    async_time_t diff;
+    async_time_t next_timestamp;
+
     struct async_looper_command cmd;
 
-    async_time_t now = async_get_time();
-    async_time_t last_time = now;
-    async_time_t escaped;
+    next_timestamp = ASYNC_TIME_FOREVER;
 
     while (1) {
-        if (wait_time == 0) {
-            wait_time = async_event_exec_timeout(&looper->events, async_get_time() - last_time);
-            last_time = async_get_time();
-        }
         now = async_get_time();
-        if (0 == async_pend_sem(looper->sem, wait_time)) {
-            wait_time = 0;
+        if (next_timestamp <= now) {
+            next_timestamp = async_event_exec_timeout(&looper->events);
+            now = async_get_time();
+        }
+
+        if (next_timestamp <= now) {
+            diff = 1;
+        } else {
+            diff = next_timestamp - now;
+        }
+
+        if (0 == async_pend_sem(looper->sem, diff)) {
             continue;
         }
 
         // µÈ´ý³¬Ê±.
-        escaped = async_get_time() - now;
-        if (escaped >= wait_time) {
-            wait_time = 0;
-        } else {
-            wait_time = wait_time - escaped;
-        }
 
         async_lock_mutex(looper->lock);
         if (sizeof(cmd) != ringbuffer_read(&(looper->rb), (unsigned char *__FAR)&cmd, sizeof(cmd))) {
@@ -187,17 +188,17 @@ void async_looper_loop(void) {
         async_unlock_mutex(looper->lock);
 
         if (cmd.type == LOOPER_COMMAND_TYPE_TRIGGER_CALL) {
-            async_timeout_t this_wait_time = async_event_exec_trigger(cmd.data.event, &looper->events, async_get_time() - last_time);
-            if (this_wait_time < wait_time) {
-                wait_time = this_wait_time;
+            async_time_t timestamp = async_event_exec_trigger(cmd.data.event, &looper->events);
+            if (timestamp < next_timestamp) {
+                next_timestamp = timestamp;
             }
             continue;
         }
 
         if (cmd.type == LOOPER_COMMAND_TYPE_ADD_EVENT) {
-            async_timeout_t this_wait_time = async_event_add_to_looper_event_list(cmd.data.event, &looper->events, async_get_time() - last_time);
-            if (this_wait_time < wait_time) {
-                wait_time = this_wait_time;
+            async_time_t timestamp = async_event_add_to_looper_event_list(cmd.data.event, &looper->events);
+            if (timestamp < next_timestamp) {
+                next_timestamp = timestamp;
             }
             continue;
         }
@@ -219,7 +220,6 @@ void async_looper_loop(void) {
             list_move(&looper->head, &free_list);
             async_unlock_mutex(async_g_lock);
 #endif
-
             return;
         }
     }

@@ -13,8 +13,8 @@ static LIST_HEAD(free_list);
 struct async_event {
     struct list_head head;
     async_event_callback_t cb;
-    async_timeout_t timeout;
-    async_timeout_t timeout_left;
+    async_time_t timeout;
+    async_time_t next_timestamp;
 #if ASYNC_LOOPER_SIZE>1
     async_looper_t looper;
 #endif
@@ -32,9 +32,9 @@ void async_event_init(void) {
 }
 
 #if ASYNC_LOOPER_SIZE>1
-async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat) {
+async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_time_t timeout, void *__FAR dat) {
 #else
-async_event_t async_event_register(async_event_callback_t cb, async_timeout_t timeout, void *__FAR dat) {
+async_event_t async_event_register(async_event_callback_t cb, async_time_t timeout, void *__FAR dat) {
 #endif
     async_event_t ret;
     struct async_looper_command priv;
@@ -73,46 +73,43 @@ async_event_t async_event_register(async_event_callback_t cb, async_timeout_t ti
     return ASYNC_EVENT_REGISTER_ERROR;
 }
 
-async_timeout_t async_event_exec_timeout(struct list_head *__FAR events, async_timeout_t escaped) {
+async_time_t async_event_exec_timeout(struct list_head *__FAR events) {
     char rc;
     async_event_t event;
     struct list_head *__FAR pos;
     struct list_head *__FAR n;
 
-    async_timeout_t min = ASYNC_TIMEOUT_FOREVER;
+    async_time_t now = async_get_time();
+    async_time_t most_recent_time = ASYNC_TIME_FOREVER;
 
     list_for_each_safe(pos, n, events) {
         event = (async_event_t)pos;
-        if (event->timeout == ASYNC_TIMEOUT_FOREVER) {
-            continue;
+
+        if (event->next_timestamp > now) {
+            goto __check_timestamp;
         }
 
-        if (event->timeout_left <= escaped) {
-            event->timeout_left = 0;
-            rc = event->cb(event);
-            if (rc == 0) {
-                async_lock_mutex(async_g_lock);
-                list_move(pos, &free_list);
-                async_unlock_mutex(async_g_lock);
-            } else {
-                event->timeout_left = event->timeout;
-                if (event->timeout < min) {
-                    min = event->timeout;
-                }
-            }
+        rc = event->cb(event);
+        if (rc == 0) {
+            async_lock_mutex(async_g_lock);
+            list_move(pos, &free_list);
+            async_unlock_mutex(async_g_lock);
             continue;
+
         }
 
-        event->timeout_left -= escaped;
-        if (event->timeout_left < min) {
-            min = event->timeout_left;
+        event->next_timestamp = now + event->timeout;
+
+__check_timestamp:
+        if (event->next_timestamp < most_recent_time) {
+            most_recent_time = event->next_timestamp;
         }
     }
 
-    return min;
+    return most_recent_time;
 }
 
-async_timeout_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events, async_timeout_t escaped_offset) {
+async_time_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events) {
     char rc;
     struct list_head *__FAR pos;
     struct list_head *__FAR n;
@@ -123,17 +120,17 @@ async_timeout_t async_event_exec_trigger(async_event_t event, struct list_head *
         }
 
         rc = event->cb(event);
-
         if (rc == 0) {
             async_lock_mutex(async_g_lock);
             list_move(&event->head, &free_list);
             async_unlock_mutex(async_g_lock);
-            return ASYNC_TIMEOUT_FOREVER;
+            return ASYNC_TIME_FOREVER;
         }
-        event->timeout_left = event->timeout + escaped_offset;
-        return event->timeout;
+
+        event->next_timestamp = async_get_time() + event->timeout;
+        return event->next_timestamp;
     }
-    return ASYNC_TIMEOUT_FOREVER;
+    return ASYNC_TIME_FOREVER;
 }
 
 char async_event_trigger(async_event_t event) {
@@ -149,7 +146,7 @@ char async_event_trigger(async_event_t event) {
 #endif
 }
 
-async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list, async_timeout_t escaped_offset) {
+async_time_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list) {
     char rc = 1;
 
     if (event->timeout == 0) {
@@ -160,11 +157,11 @@ async_timeout_t async_event_add_to_looper_event_list(async_event_t event, struct
         async_lock_mutex(async_g_lock);
         list_add(&event->head, &free_list);
         async_unlock_mutex(async_g_lock);
-        return ASYNC_TIMEOUT_FOREVER;
+        return ASYNC_TIME_FOREVER;
     }
-    event->timeout_left = event->timeout + escaped_offset;
+    event->next_timestamp = async_get_time() + event->timeout;
     list_add(&event->head, list);
-    return event->timeout;
+    return event->next_timestamp;
 }
 
 void async_event_free_from_looper_event_list(async_event_t event, struct list_head *__FAR list) {
@@ -192,7 +189,7 @@ void async_event_set_callback(async_event_t event, async_event_callback_t cb) {
 }
 
 
-void async_event_set_timeout(async_event_t event, async_timeout_t timeout) {
+void async_event_set_timeout(async_event_t event, async_time_t timeout) {
     event->timeout = timeout;
 }
 
@@ -205,7 +202,7 @@ void *__FAR async_event_get_data(async_event_t event) {
 }
 
 char async_event_is_timeout(async_event_t event) {
-    return event->timeout_left == 0;
+    return event->next_timestamp <= async_get_time();
 }
 
 char async_event_cancel(async_event_t event) {
