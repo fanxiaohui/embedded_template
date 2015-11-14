@@ -24,15 +24,15 @@ TEST(ringbuffer, aaa) {
 
     (void)memset(buf2, 0x28, sizeof(buf2));
 
-    RingBuffer_Clear(&forTest);
-    TEST_ASSERT_EQUAL(TEST_RINGBUFFER_SIZE, RingBuffer_LeftSpace(&forTest));
-    TEST_ASSERT_EQUAL(56, RingBuffer_PutData(&forTest, 0x28, 56));
-    TEST_ASSERT_EQUAL(TEST_RINGBUFFER_SIZE - 56, RingBuffer_LeftSpace(&forTest));
+    ringbuffer_clear(&forTest);
+    TEST_ASSERT_EQUAL(TEST_RINGBUFFER_SIZE, ringbuffer_get_left_space(&forTest));
+    TEST_ASSERT_EQUAL(56, ringbuffer_put(&forTest, 0x28, 56));
+    TEST_ASSERT_EQUAL(TEST_RINGBUFFER_SIZE - 56, ringbuffer_get_left_space(&forTest));
 
     for (len = 0; len < 56; ) {
         int read = 56 - len;
         read = read > sizeof(buf1) ? sizeof(buf1) : read;
-        TEST_ASSERT_EQUAL(read, RingBuffer_Read(&forTest, buf1, read));
+        TEST_ASSERT_EQUAL(read, ringbuffer_read(&forTest, buf1, read));
         TEST_ASSERT_EQUAL_UINT8_ARRAY(buf1, buf2, read);
         //TEST_ASSERT_EQUAL_UINT8_ARRAY(buf1, "Hello world!!!", read);
         len += read;
@@ -40,23 +40,23 @@ TEST(ringbuffer, aaa) {
 
 
     (void)strcpy(buf1, "Hello world\n");
-    TEST_ASSERT_EQUAL(strlen(buf1) + 1, RingBuffer_Write(&forTest, buf1, strlen(buf1) + 1));
-    TEST_ASSERT_EQUAL(strlen(buf1) + 1, RingBuffer_PopString(&forTest, buf2, sizeof(buf2)));
+    TEST_ASSERT_EQUAL(strlen(buf1) + 1, ringbuffer_write(&forTest, buf1, strlen(buf1) + 1));
+    TEST_ASSERT_EQUAL(strlen(buf1) + 1, ringbuffer_read_string(&forTest, buf2, sizeof(buf2)));
     TEST_ASSERT_EQUAL_STRING(buf1, buf2);
 
 
 
     (void)strcpy(buf1, "Hello world\n");
     len = sizeof(buf2);
-    TEST_ASSERT_EQUAL(strlen(buf1), RingBuffer_Write(&forTest, buf1, strlen(buf1)));
-    TEST_ASSERT(RingBuffer_PopStringIsStartWith(&forTest, "Hello", buf2, &len));
+    TEST_ASSERT_EQUAL(strlen(buf1), ringbuffer_write(&forTest, buf1, strlen(buf1)));
+    TEST_ASSERT(ringbuffer_read_string_and_is_with_prefix(&forTest, "Hello", buf2, &len));
     TEST_ASSERT_EQUAL(strlen(buf1), len);
     TEST_ASSERT_EQUAL_STRING(buf1, buf2);
 
     (void)strcpy(buf1, "Hello world\n");
     len = sizeof(buf2);
-    TEST_ASSERT_EQUAL(strlen(buf1), RingBuffer_Write(&forTest, buf1, strlen(buf1)));
-    TEST_ASSERT_FALSE(RingBuffer_PopStringIsStartWith(&forTest, "world", buf2, &len));
+    TEST_ASSERT_EQUAL(strlen(buf1), ringbuffer_write(&forTest, buf1, strlen(buf1)));
+    TEST_ASSERT_FALSE(ringbuffer_read_string_and_is_with_prefix(&forTest, "world", buf2, &len));
     TEST_ASSERT_EQUAL(strlen(buf1), len);
     TEST_ASSERT_EQUAL_STRING(buf1, buf2);
 }
