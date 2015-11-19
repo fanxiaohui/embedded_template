@@ -1,60 +1,49 @@
 #include "shell_private.h"
 #include <string.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <ctype.h>
 
 
 #ifndef SHELL_WELCOM_MESSAGE
-#define SHELL_WELCOM_MESSAGE "Hello, this is a shell."
+#define SHELL_WELCOM_MESSAGE     "Hello, this is a shell."
 #endif
 
 #ifndef SHELL_PROMPT
-#define SHELL_PROMPT   "SHELL> "
+#define SHELL_PROMPT              "SHELL> "
 #endif
 
-#define SHELL_MAXSIZE                   50
-#define SHELL_ERRMSG                    "Invalid command, type 'help' for help\n"
+#define SHELL_MAXSIZE             50
+#define SHELL_ERRMSG              "Invalid command, type 'help' for help\n"
 #define SHELL_ALT_SPACE           '\x07'
 #define SHELL_MAX_ARGS            10
 
 static unsigned char is_exit;
 
-// 'Not implemented' handler for shell comands
 void shellh_not_implemented_handler(int argc, char **argv) {
     printf(SHELL_ERRMSG);
 }
 
-// Shows the help for the given command
 void shellh_show_help(const char *cmd, const char *helptext) {
     printf("Usage: %s %s", cmd, helptext);
 }
 
-
-
-
 static const char shell_summary_exit[] = "exit the shell";
-static const char shell_help_exit[] = \
-                                      "\n"
-                                      "Exits the shell.\n";
+static const char shell_help_exit[] = "\nExits the shell.\n";
 static void shell_func_exit(int argc, char **argv) {
     printf("byte ...\n");
     is_exit = 1;
 }
 
 static const char shell_summary_help[] = "shell help";
-static const char shell_help_help[] = \
-                                      "[<command>]\n"
+static const char shell_help_help[] = "[<command>]\n"
                                       "    [<command>] - the command to get help on.\n"
                                       "Without arguments it shows a summary of all the shell commands.\n";
 static void shell_func_help(int argc, char **argv);
 
 
-// ****************************************************************************
-// Public interface
-
 /// shell命令列表的结束标记.
-#define SHELL_COMMAND_END() \
-	{0, 0, 0, 0}
+#define SHELL_COMMAND_END() {0, 0, 0, 0}
 
 static const shell_command_t buildin_shell_commands[] = {
 #ifdef SHELL_COMMAND_CUSTOM_LIST
@@ -110,7 +99,6 @@ static void shell_func_help(int argc, char **argv) {
     printf("For more information use 'help <command>'.\n");
 }
 
-
 static const shell_command_t *shell_execute_command_in_commands(const shell_command_t *cmds, int argc, char **argv) {
     const shell_command_t *pcmd;
     for (pcmd = cmds; pcmd->cmd != NULL; ++pcmd) {
@@ -119,9 +107,7 @@ static const shell_command_t *shell_execute_command_in_commands(const shell_comm
             return pcmd;
         }
     }
-
     return NULL;
-
 }
 
 void shell_execute_command(char *cmd) {
@@ -260,7 +246,7 @@ void getline(char *buf, int buf_size) {
             *buf = 0;
             return;
         }
-        
+
         fputc(c, stdout);
         *buf++ = c;
     }
@@ -271,7 +257,6 @@ void getline(char *buf, int buf_size) {
 
 extern void shell_getline(char *buf, int buf_size);
 
-// Execute the eLua "shell" in an infinite loop
 void shell_loop(shell_get_line get_line, void *priv_data) {
     char cmd[SHELL_MAXSIZE];
     is_exit = 0;
@@ -282,12 +267,10 @@ void shell_loop(shell_get_line get_line, void *priv_data) {
 
     while (!is_exit) {
         printf(SHELL_PROMPT);
-        //fgets(cmd, SHELL_MAXSIZE, stdin);
         get_line(cmd, sizeof(cmd), priv_data);
         if (strlen(cmd) == 0) {
             continue;
         }
-
         shell_execute_command(cmd);
     }
 }
