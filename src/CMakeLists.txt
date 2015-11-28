@@ -6,6 +6,7 @@ include_directories(
 add_subdirectory(async)
 add_subdirectory(ringbuffer)
 add_subdirectory(drivers)
+add_subdirectory(softi2c)
 
 add_executable(
     async_example
