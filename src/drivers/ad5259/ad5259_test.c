@@ -1,25 +1,8 @@
 #include "ad5259_platform.h"
 #include "unity_fixture.h"
 
-char init(struct ad5259_platform const *__FAR platform) {
-}
-
-char i2c_write(struct ad5259_platform const *__FAR platform, uint8_t const *dat, char len) {
-    return len;
-}
-
-char i2c_read(struct ad5259_platform const *__FAR platform, uint8_t *dat, char len) {
-    *dat++ = 0x1C;
-    *dat++ = 0x0F;
-    return len;
-}
-
 static struct ad5259_platform ad5259_platform_test = {
-    .platform_data = NULL,
     .nominal_resistance = 10000,
-    .init = init,
-    .i2c_read = i2c_read,
-    .i2c_write = i2c_write,
 };
 
 static struct ad5259 ad5259_test = {

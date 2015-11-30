@@ -16,32 +16,6 @@ typedef const struct softi2c_platform *__FAR softi2c_t;
 /// \param i2c 对应的IO底层接口.
 void softi2c_init(softi2c_t i2c);
 
-/// \brief softi2c_write I2C些数据.
-///
-/// \param i2c 对应的IO底层接口.
-/// \param addr SLAVE地址, 7位, 不包含读写位, 最终总线上的第一个8位周期为:(addr << 1).
-/// \param dat 需要写入的数据.
-/// \param len 需要写入的数据的长度.
-///
-/// \return 写入的数据的长度.
-unsigned char softi2c_write(softi2c_t i2c,
-                            unsigned char addr,
-                            const unsigned char *__FAR dat,
-                            unsigned char len);
-
-/// \brief softi2c_read I2C读取数据.
-///
-/// \param i2c 对应的IO底层接口.
-/// \param addr SLAVE地址, 7位, 不包含读写位, 最终总线上的第一个8位周期为:((addr << 1) + 1).
-/// \param dat 读取的数据存放的地址.
-/// \param len 期望读取的数据长度.
-///
-/// \return 已读取的数据的长度.
-unsigned char softi2c_read(softi2c_t i2c,
-                           unsigned char addr,
-                           unsigned char *__FAR dat,
-                           unsigned char len);
-
 /// \brief softi2c_write_then_read 先写后读.
 ///
 /// \param i2c 对应的IO底层接口.

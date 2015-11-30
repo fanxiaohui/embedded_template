@@ -1,4 +1,3 @@
-
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/
 )
@@ -6,7 +5,7 @@ include_directories(
 add_subdirectory(async)
 add_subdirectory(ringbuffer)
 add_subdirectory(drivers)
-add_subdirectory(softi2c)
+add_subdirectory(i2c)
 
 add_executable(
     async_example

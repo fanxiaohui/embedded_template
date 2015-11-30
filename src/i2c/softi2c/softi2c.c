@@ -7,26 +7,26 @@
 ///
 /// \param i2c 底层接口
 static void  inline __start(const struct softi2c_platform *__FAR i2c) {
-    i2c->scl(i2c, 1);
-    i2c->sda(i2c, 1);
-    i2c->sda(i2c, 0);
-    i2c->scl(i2c, 0);
+    i2c->scl(i2c->platform_data, 1);
+    i2c->sda(i2c->platform_data, 1);
+    i2c->sda(i2c->platform_data, 0);
+    i2c->scl(i2c->platform_data, 0);
 }
 
 /// \brief __start 在总线上产生I2C总线周期结束信号.
 ///
 /// \param i2c 底层接口
 static void  inline __stop(const struct softi2c_platform *__FAR i2c) {
-    i2c->sda(i2c, 0);
-    i2c->scl(i2c, 1);
-    i2c->sda(i2c, 1);
+    i2c->sda(i2c->platform_data, 0);
+    i2c->scl(i2c->platform_data, 1);
+    i2c->sda(i2c->platform_data, 1);
 }
 
 static void inline __restart(const struct softi2c_platform *__FAR i2c) {
-    i2c->sda(i2c, 1);
-    i2c->scl(i2c, 1);
-    i2c->sda(i2c, 0);
-    i2c->scl(i2c, 0);
+    i2c->sda(i2c->platform_data, 1);
+    i2c->scl(i2c->platform_data, 1);
+    i2c->sda(i2c->platform_data, 0);
+    i2c->scl(i2c->platform_data, 0);
 }
 
 /// \brief __onebit 向I2C总线产生一个BIT的信号, 并读取这个时钟总线上的数据.
@@ -37,14 +37,14 @@ static void inline __restart(const struct softi2c_platform *__FAR i2c) {
 /// \return !=0 这个时钟周期总线上读取的SDA=1; ==0; 这个时钟周期总线上读取到SDA=0.
 static char inline __onebit(const struct softi2c_platform *__FAR i2c, char bit) {
     unsigned char timeout = 0;
-    i2c->sda(i2c, bit);
-    while (i2c->scl(i2c, 1) == 0) {
+    i2c->sda(i2c->platform_data, bit);
+    while (i2c->scl(i2c->platform_data, 1) == 0) {
         if (timeout++ > 100) {
             break;
         }
     }
-    bit = i2c->sda(i2c, bit);
-    i2c->scl(i2c, 0);
+    bit = i2c->sda(i2c->platform_data, bit);
+    i2c->scl(i2c->platform_data, 0);
     return bit;
 }
 
@@ -66,9 +66,9 @@ static unsigned char inline __onebyte(const struct softi2c_platform *__FAR i2c, 
 }
 
 void softi2c_init(const struct softi2c_platform *__FAR i2c) {
-    i2c->init(i2c );
-    i2c->sda(i2c, 1);
-    i2c->scl(i2c, 1);
+    i2c->init(i2c->platform_data);
+    i2c->sda(i2c->platform_data, 1);
+    i2c->scl(i2c->platform_data, 1);
 }
 
 unsigned char softi2c_write(const struct softi2c_platform *__FAR i2c,
