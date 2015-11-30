@@ -5,6 +5,7 @@
 
 /// IO底层接口.
 struct softi2c_platform {
+    void *platform_data;
     /// \brief 初始化对应IO口
     /// \param i2c 对应的I2C底层接口
     void (* init)(const struct softi2c_platform *__FAR i2c);
