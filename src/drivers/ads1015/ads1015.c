@@ -67,7 +67,7 @@ int16_t ads1015_single_convert(const struct ads1015_platform *__FAR dev, enum ad
     if (!write_register(dev, 0x01, tmp)) {
         return ADS1015_RESULT_ERROR;
     }
-    if (!write_register(dev, 0x01, tmp | (1 << 15))) {
+    if (!write_register(dev, 0x01, tmp | 0x8000)) {
         return ADS1015_RESULT_ERROR;
     }
 
@@ -87,7 +87,7 @@ int16_t ads1015_single_convert(const struct ads1015_platform *__FAR dev, enum ad
             if (!read_register(dev, 0x01, &tmp)) {
                 return ADS1015_RESULT_ERROR;
             }
-        } while ((tmp & (1 << 15)) == 0);
+        } while ((tmp & 0x8000) == 0);
     }
 
     if (!read_register(dev, 0x00, (uint16_t *)&result)) {
@@ -105,7 +105,7 @@ int16_t ads1015_result_to_mv(int16_t result, enum ads1015_full_scale_voltage fsl
     signed long res;
     static const uint16_t vt[] = {6144, 4096, 2048, 1024, 512, 256};
 
-    if (fsl >= sizeof(vt) / sizeof(vt[0])) return 0;
+    if (((uint8_t)fsl) >= sizeof(vt) / sizeof(vt[0])) return 0;
 
     if (result >= ADS1015_RESULT_FULL) return 0;
     if (result < -ADS1015_RESULT_FULL) return 0;

@@ -21,5 +21,7 @@ struct softspi {
 };
 
 
+extern const struct spi_operations softspi_ops;
+
 #endif
 

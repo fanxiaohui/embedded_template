@@ -1,24 +1,29 @@
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/
+    ${CMAKE_CURRENT_SOURCE_DIR}/drivers
+    ${CMAKE_CURRENT_SOURCE_DIR}/i2c
+    ${CMAKE_CURRENT_SOURCE_DIR}/spi
+    ${CMAKE_CURRENT_SOURCE_DIR}/gpio
 )
 
-add_subdirectory(async)
+#add_subdirectory(async)
 add_subdirectory(ringbuffer)
 add_subdirectory(drivers)
 add_subdirectory(i2c)
+add_subdirectory(spi)
 add_subdirectory(gpio)
 
-add_executable(
-    async_example
-    async_example.c
-)
-target_link_libraries(
-    async_example
-    async
-    ringbuffer
-    pthread
-    m
-)
+#add_executable(
+#    async_example
+#    async_example.c
+#)
+#target_link_libraries(
+#    async_example
+#    async
+#    ringbuffer
+#    pthread
+#    m
+#)
 
 
 add_executable(
@@ -31,6 +36,7 @@ target_link_libraries(
     unity
     drivers
     gpio
+    i2c
+    spi
 )
-
 
