@@ -14,7 +14,7 @@ typedef const struct softi2c_platform *__FAR softi2c_t;
 /// \brief softi2c_init 初始化.
 ///
 /// \param i2c 对应的IO底层接口.
-void softi2c_init(softi2c_t i2c);
+char softi2c_init(softi2c_t i2c);
 
 /// \brief softi2c_write_then_read 先写后读.
 ///

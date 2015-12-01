@@ -15,8 +15,9 @@ char softspi_init(struct softspi *bus, uint8_t flags) {
 
     gpio_init(gpio_ops, plat->clk, GPIO_MODE_OUTPUT_PUSHPULL);
     gpio_set_output(gpio_ops, plat->clk, GPIO_MODE_OUTPUT_PUSHPULL);
-    gpio_init(gpio_ops, plat->dat, GPIO_MODE_OUTPUT_PUSHPULL);
-    gpio_set_output(gpio_ops, plat->dat, GPIO_MODE_OUTPUT_PUSHPULL);
+    gpio_init(gpio_ops, plat->mosi, GPIO_MODE_OUTPUT_PUSHPULL);
+    gpio_set_output(gpio_ops, plat->mosi, GPIO_MODE_OUTPUT_PUSHPULL);
+    gpio_init(gpio_ops, plat->miso, GPIO_MODE_INPUT);
 
     gpio_set_output(gpio_ops, plat->clk, flags & SPI_FLAG_CLK_IDEL_HIGH);
 
@@ -80,45 +81,110 @@ char softspi_select(struct softspi *bus, uint8_t which, char is_select) {
     }
 
     gpio_set_output(gpio_ops, plat->cs_pin[which], is_select == 0);
+    return 1;
 }
 
-inline static char __transmit_1st_edge_msb_first(struct softspi_platform const *plat, uint8_t *dat) {
+inline static char __transmit_1st_edge_msb_first(struct softspi_platform const *plat, uint8_t *dat, uint8_t clk_idle_high) {
+    uint8_t s, r, b;
+    gpio_ops_t gpio_ops = plat->gpio_ops;
+
+    s = *dat;
+    r = 0;
+    for (b = 0x80; b != 0; b = b >> 1) {
+        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+            r |= b;
+        }
+        gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
+    }
+
+    *dat = r;
+    return 1;
 }
 
-inline static char __transmit_2st_edge_msb_first(struct softspi_platform const *plat, uint8_t *dat) {
+inline static char __transmit_2st_edge_msb_first(struct softspi_platform const *plat, uint8_t *dat, uint8_t clk_idle_high) {
+    uint8_t s, r, b;
+    gpio_ops_t gpio_ops = plat->gpio_ops;
+
+    s = *dat;
+    r = 0;
+    for (b = 0x80; b != 0; b = b >> 1) {
+        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
+        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+            r |= b;
+        }
+    }
+
+    *dat = r;
+    return 1;
 }
 
-inline static char __transmit_1st_edge_lsb_first(struct softspi_platform const *plat, uint8_t *dat) {
+inline static char __transmit_1st_edge_lsb_first(struct softspi_platform const *plat, uint8_t *dat, uint8_t clk_idle_high) {
+    uint8_t s, r, b;
+    gpio_ops_t gpio_ops = plat->gpio_ops;
+
+    s = *dat;
+    r = 0;
+    for (b = 0x01; b != 0; b = b << 1) {
+        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+            r |= b;
+        }
+        gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
+    }
+
+    *dat = r;
+    return 1;
 }
 
-inline static char __transmit_2st_edge_lsb_first(struct softspi_platform const *plat, uint8_t *dat) {
+inline static char __transmit_2st_edge_lsb_first(struct softspi_platform const *plat, uint8_t *dat, uint8_t clk_idle_high) {
+    uint8_t s, r, b;
+    gpio_ops_t gpio_ops = plat->gpio_ops;
+
+    s = *dat;
+    r = 0;
+    for (b = 0x01; b != 0; b = b << 1) {
+        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
+        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+            r |= b;
+        }
+    }
+
+    *dat = r;
+    return 1;
 }
 
 char softspi_transmit(struct softspi *bus, uint8_t *dat) {
     if (bus->flags & SPI_FLAG_LSB_FIRST) {
         if (bus->flags & SPI_FLAG_CLK_FIRST_EDGE) {
-            return __transmit_1st_edge_lsb_first(bus->platform, dat);
+            return __transmit_1st_edge_lsb_first(bus->platform, dat, bus->flags & SPI_FLAG_CLK_IDEL_HIGH);
         } else {
-            return __transmit_2st_edge_lsb_first(bus->platform, dat);
+            return __transmit_2st_edge_lsb_first(bus->platform, dat, bus->flags & SPI_FLAG_CLK_IDEL_HIGH);
         }
     } else {
         if (bus->flags & SPI_FLAG_CLK_FIRST_EDGE) {
-            return __transmit_1st_edge_msb_first(bus->platform, dat);
+            return __transmit_1st_edge_msb_first(bus->platform, dat, bus->flags & SPI_FLAG_CLK_IDEL_HIGH);
         } else {
-            return __transmit_2st_edge_msb_first(bus->platform, dat);
+            return __transmit_2st_edge_msb_first(bus->platform, dat, bus->flags & SPI_FLAG_CLK_IDEL_HIGH);
         }
     }
 }
 
 const struct spi_operations softspi_ops = {
-    .init = softspi_init,
-    .config_clk_idle = softspi_config_clk_idle,
-    .is_clk_idle_high = softspi_is_clk_idle_high,
-    .config_clk_edge = softspi_config_clk_edge,
-    .is_clk_edge_first = softspi_is_clk_edge_first,
-    .config_first_bit = softspi_config_first_bit,
-    .is_lsb_first = softspi_is_lsb_first,
-    .select = softspi_select,
-    .transmit = softspi_transmit,
+    .init = (spi_init_func)softspi_init,
+    .config_clk_idle = (spi_config_clk_idle_func)softspi_config_clk_idle,
+    .is_clk_idle_high = (spi_is_clk_idle_high_fucn)softspi_is_clk_idle_high,
+    .config_clk_edge = (spi_config_clk_edge_func)softspi_config_clk_edge,
+    .is_clk_edge_first = (spi_is_clk_first_edge_func)softspi_is_clk_edge_first,
+    .config_first_bit = (spi_config_first_bit_func)softspi_config_first_bit,
+    .is_lsb_first = (spi_is_lsb_first_func)softspi_is_lsb_first,
+    .select = (spi_select_func)softspi_select,
+    .transmit = (spi_transmit_func)softspi_transmit,
 };
 

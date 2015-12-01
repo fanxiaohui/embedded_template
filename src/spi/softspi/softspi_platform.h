@@ -7,7 +7,8 @@
 struct softspi_platform {
     const struct gpio_operations *gpio_ops;
     void *clk;
-    void *dat;
+    void *mosi;
+    void *miso;
     void **cs_pin;
     uint8_t cs_num;
 };

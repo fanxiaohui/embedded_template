@@ -11,7 +11,7 @@ struct softi2c_platform {
     const struct gpio_operations *gpio_ops;
 };
 
-extern struct i2c_ops softi2c_ops;
+extern const struct i2c_operations softi2c_ops;
 
 #endif
 
