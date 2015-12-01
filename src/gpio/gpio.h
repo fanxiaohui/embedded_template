@@ -1,8 +1,14 @@
 #ifndef __GPIO_H__
 #define __GPIO_H__
 
-typedef void *gpio_t;
-typedef struct gpio_operations const *gpio_ops_t;
+#include <stdint.h>
+
+#ifndef __FAR
+#define __FAR
+#endif
+
+typedef void *__FAR gpio_t;
+typedef struct gpio_operations const *__FAR gpio_ops_t;
 
 enum gpio_mode {
     GPIO_MODE_INPUT,
@@ -13,6 +19,6 @@ enum gpio_mode {
 inline char gpio_init(gpio_ops_t ops, gpio_t io, enum gpio_mode mode);
 inline char gpio_input_is_high(gpio_ops_t ops, gpio_t io);
 inline char gpio_output_is_high(gpio_ops_t ops, gpio_t io);
-inline void gpio_set_output(gpio_ops_t ops, gpio_t io, char is_high);
+inline char gpio_set_output(gpio_ops_t ops, gpio_t io, uint8_t is_high);
 
 #endif

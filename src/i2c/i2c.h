@@ -3,13 +3,18 @@
 
 #include <stdint.h>
 
-typedef const struct i2c_bus *i2c_bus_t;
-inline char i2c_init(const struct i2c_bus *bus);
-inline uint8_t i2c_transmit(const struct i2c_bus *bus,
+#ifndef __FAR
+#define __FAR
+#endif
+
+typedef const struct i2c_bus *__FAR i2c_bus_t;
+
+inline char i2c_init(i2c_bus_t bus);
+inline uint8_t i2c_transmit(i2c_bus_t bus,
                             uint8_t addr,
-                            const uint8_t *w,
+                            const uint8_t *__FAR w,
                             uint8_t wlen,
-                            uint8_t *r,
+                            uint8_t *__FAR r,
                             uint8_t rlen);
 #endif
 

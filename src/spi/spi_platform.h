@@ -3,16 +3,15 @@
 
 #include "spi.h"
 
-
-typedef char (*spi_init_func)(void *private_data, uint8_t flags);
-typedef char (*spi_config_clk_idle_func)(void *private_data, uint8_t is_high);
-typedef char (*spi_is_clk_idle_high_fucn)(void *private_data);
-typedef char (*spi_config_clk_edge_func)(void *private_data, uint8_t is_first_edge);
-typedef char (*spi_is_clk_first_edge_func)(void *private_data);
-typedef char (*spi_config_first_bit_func)(void *private_data, uint8_t is_lsb_first);
-typedef char (*spi_is_lsb_first_func)(void *private_data);
-typedef char (*spi_select_func)(void *private_data, uint8_t which, uint8_t is_select);
-typedef char (*spi_transmit_func)(void *private_data, uint8_t *b);
+typedef char (*spi_init_func)(void *__FAR private_data, uint8_t flags);
+typedef char (*spi_config_clk_idle_func)(void *__FAR private_data, uint8_t is_high);
+typedef char (*spi_is_clk_idle_high_fucn)(void *__FAR private_data);
+typedef char (*spi_config_clk_edge_func)(void *__FAR private_data, uint8_t is_first_edge);
+typedef char (*spi_is_clk_first_edge_func)(void *__FAR private_data);
+typedef char (*spi_config_first_bit_func)(void *__FAR private_data, uint8_t is_lsb_first);
+typedef char (*spi_is_lsb_first_func)(void *__FAR private_data);
+typedef char (*spi_select_func)(void *__FAR private_data, uint8_t which, uint8_t is_select);
+typedef char (*spi_transmit_func)(void *__FAR private_data, uint8_t *b);
 
 struct spi_operations {
     spi_init_func init;
@@ -27,8 +26,8 @@ struct spi_operations {
 };
 
 struct spi_bus {
-    void *private_data;
-    const struct spi_operations *ops;
+    void *__FAR private_data;
+    const struct spi_operations *__FAR ops;
 };
 
 #endif

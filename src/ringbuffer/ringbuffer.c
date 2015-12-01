@@ -93,9 +93,11 @@ RINGBUFFER_SIZE_TYPE ringbuffer_try_read_util(ringbuffer_t rb, unsigned char *__
             rb->out = 0;
         }
         --rb->len;
-		*buf = c;
-        if (c == term) { return i + 1; }
-		++buf;
+        *buf = c;
+        if (c == term) {
+            return i + 1;
+        }
+        ++buf;
     }
 
     return i;

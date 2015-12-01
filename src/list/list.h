@@ -19,7 +19,7 @@ struct list_head {
 
 #define container_of(ptr, type, member) ({ \
      const typeof( ((type *__FAR)0)->member ) *__mptr = (ptr); \
-     (type *__FAR)( (char *__FAR)__mptr - offsetof(type,member) );}) 
+     (type *__FAR)( (char *__FAR)__mptr - offsetof(type,member) );})
 
 /*
  * Simple doubly linked list implementation.
@@ -36,10 +36,9 @@ struct list_head {
 #define LIST_HEAD(name) \
 	struct list_head name = LIST_HEAD_INIT(name)
 
-static inline void INIT_LIST_HEAD(struct list_head *__FAR list)
-{
-	list->next = list;
-	list->prev = list;
+static inline void INIT_LIST_HEAD(struct list_head *__FAR list) {
+    list->next = list;
+    list->prev = list;
 }
 
 /*
@@ -49,13 +48,12 @@ static inline void INIT_LIST_HEAD(struct list_head *__FAR list)
  * the prev/next entries already!
  */
 static inline void __list_add(struct list_head *__FAR new,
-			      struct list_head *__FAR prev,
-			      struct list_head *__FAR next)
-{
-	next->prev = new;
-	new->next = next;
-	new->prev = prev;
-	prev->next = new;
+                              struct list_head *__FAR prev,
+                              struct list_head *__FAR next) {
+    next->prev = new;
+    new->next = next;
+    new->prev = prev;
+    prev->next = new;
 }
 
 /**
@@ -66,9 +64,8 @@ static inline void __list_add(struct list_head *__FAR new,
  * Insert a new entry after the specified head.
  * This is good for implementing stacks.
  */
-static inline void list_add(struct list_head *__FAR new, struct list_head *__FAR head)
-{
-	__list_add(new, head, head->next);
+static inline void list_add(struct list_head *__FAR new, struct list_head *__FAR head) {
+    __list_add(new, head, head->next);
 }
 
 
@@ -80,9 +77,8 @@ static inline void list_add(struct list_head *__FAR new, struct list_head *__FAR
  * Insert a new entry before the specified head.
  * This is useful for implementing queues.
  */
-static inline void list_add_tail(struct list_head *__FAR new, struct list_head *__FAR head)
-{
-	__list_add(new, head->prev, head);
+static inline void list_add_tail(struct list_head *__FAR new, struct list_head *__FAR head) {
+    __list_add(new, head->prev, head);
 }
 
 /*
@@ -92,10 +88,9 @@ static inline void list_add_tail(struct list_head *__FAR new, struct list_head *
  * This is only for internal list manipulation where we know
  * the prev/next entries already!
  */
-static inline void __list_del(struct list_head *__FAR prev, struct list_head *__FAR next)
-{
-	next->prev = prev;
-	prev->next = next;
+static inline void __list_del(struct list_head *__FAR prev, struct list_head *__FAR next) {
+    next->prev = prev;
+    prev->next = next;
 }
 
 /**
@@ -104,16 +99,14 @@ static inline void __list_del(struct list_head *__FAR prev, struct list_head *__
  * Note: list_empty() on entry does not return true after this, the entry is
  * in an undefined state.
  */
-static inline void __list_del_entry(struct list_head *__FAR entry)
-{
-	__list_del(entry->prev, entry->next);
+static inline void __list_del_entry(struct list_head *__FAR entry) {
+    __list_del(entry->prev, entry->next);
 }
 
-static inline void list_del(struct list_head *__FAR entry)
-{
-	__list_del(entry->prev, entry->next);
-	entry->next = LIST_POISON1;
-	entry->prev = LIST_POISON2;
+static inline void list_del(struct list_head *__FAR entry) {
+    __list_del(entry->prev, entry->next);
+    entry->next = LIST_POISON1;
+    entry->prev = LIST_POISON2;
 }
 
 /**
@@ -124,29 +117,26 @@ static inline void list_del(struct list_head *__FAR entry)
  * If @old was empty, it will be overwritten.
  */
 static inline void list_replace(struct list_head *__FAR old,
-				struct list_head *__FAR new)
-{
-	new->next = old->next;
-	new->next->prev = new;
-	new->prev = old->prev;
-	new->prev->next = new;
+                                struct list_head *__FAR new) {
+    new->next = old->next;
+    new->next->prev = new;
+    new->prev = old->prev;
+    new->prev->next = new;
 }
 
 static inline void list_replace_init(struct list_head *__FAR old,
-					struct list_head *__FAR new)
-{
-	list_replace(old, new);
-	INIT_LIST_HEAD(old);
+                                     struct list_head *__FAR new) {
+    list_replace(old, new);
+    INIT_LIST_HEAD(old);
 }
 
 /**
  * list_del_init - deletes entry from list and reinitialize it.
  * @entry: the element to delete from the list.
  */
-static inline void list_del_init(struct list_head *__FAR entry)
-{
-	__list_del_entry(entry);
-	INIT_LIST_HEAD(entry);
+static inline void list_del_init(struct list_head *__FAR entry) {
+    __list_del_entry(entry);
+    INIT_LIST_HEAD(entry);
 }
 
 /**
@@ -154,10 +144,9 @@ static inline void list_del_init(struct list_head *__FAR entry)
  * @list: the entry to move
  * @head: the head that will precede our entry
  */
-static inline void list_move(struct list_head *__FAR list, struct list_head *__FAR head)
-{
-	__list_del_entry(list);
-	list_add(list, head);
+static inline void list_move(struct list_head *__FAR list, struct list_head *__FAR head) {
+    __list_del_entry(list);
+    list_add(list, head);
 }
 
 /**
@@ -166,10 +155,9 @@ static inline void list_move(struct list_head *__FAR list, struct list_head *__F
  * @head: the head that will follow our entry
  */
 static inline void list_move_tail(struct list_head *__FAR list,
-				  struct list_head *__FAR head)
-{
-	__list_del_entry(list);
-	list_add_tail(list, head);
+                                  struct list_head *__FAR head) {
+    __list_del_entry(list);
+    list_add_tail(list, head);
 }
 
 /**
@@ -178,18 +166,16 @@ static inline void list_move_tail(struct list_head *__FAR list,
  * @head: the head of the list
  */
 static inline int list_is_last(const struct list_head *__FAR list,
-				const struct list_head *__FAR head)
-{
-	return list->next == head;
+                               const struct list_head *__FAR head) {
+    return list->next == head;
 }
 
 /**
  * list_empty - tests whether a list is empty
  * @head: the list to test.
  */
-static inline int list_empty(const struct list_head *__FAR head)
-{
-	return head->next == head;
+static inline int list_empty(const struct list_head *__FAR head) {
+    return head->next == head;
 }
 
 /**
@@ -205,45 +191,41 @@ static inline int list_empty(const struct list_head *__FAR head)
  * to the list entry is list_del_init(). Eg. it cannot be used
  * if another CPU could re-list_add() it.
  */
-static inline int list_empty_careful(const struct list_head *__FAR head)
-{
-	struct list_head *__FAR next = head->next;
-	return (next == head) && (next == head->prev);
+static inline int list_empty_careful(const struct list_head *__FAR head) {
+    struct list_head *__FAR next = head->next;
+    return (next == head) && (next == head->prev);
 }
 
 /**
  * list_rotate_left - rotate the list to the left
  * @head: the head of the list
  */
-static inline void list_rotate_left(struct list_head *__FAR head)
-{
-	struct list_head *__FAR first;
+static inline void list_rotate_left(struct list_head *__FAR head) {
+    struct list_head *__FAR first;
 
-	if (!list_empty(head)) {
-		first = head->next;
-		list_move_tail(first, head);
-	}
+    if (!list_empty(head)) {
+        first = head->next;
+        list_move_tail(first, head);
+    }
 }
 
 /**
  * list_is_singular - tests whether a list has just one entry.
  * @head: the list to test.
  */
-static inline int list_is_singular(const struct list_head *__FAR head)
-{
-	return !list_empty(head) && (head->next == head->prev);
+static inline int list_is_singular(const struct list_head *__FAR head) {
+    return !list_empty(head) && (head->next == head->prev);
 }
 
 static inline void __list_cut_position(struct list_head *__FAR list,
-		struct list_head *__FAR head, struct list_head *__FAR entry)
-{
-	struct list_head *__FAR new_first = entry->next;
-	list->next = head->next;
-	list->next->prev = list;
-	list->prev = entry;
-	entry->next = list;
-	head->next = new_first;
-	new_first->prev = head;
+                                       struct list_head *__FAR head, struct list_head *__FAR entry) {
+    struct list_head *__FAR new_first = entry->next;
+    list->next = head->next;
+    list->next->prev = list;
+    list->prev = entry;
+    entry->next = list;
+    head->next = new_first;
+    new_first->prev = head;
 }
 
 /**
@@ -261,31 +243,29 @@ static inline void __list_cut_position(struct list_head *__FAR list,
  *
  */
 static inline void list_cut_position(struct list_head *__FAR list,
-		struct list_head *__FAR head, struct list_head *__FAR entry)
-{
-	if (list_empty(head))
-		return;
-	if (list_is_singular(head) &&
-		(head->next != entry && head != entry))
-		return;
-	if (entry == head)
-		INIT_LIST_HEAD(list);
-	else
-		__list_cut_position(list, head, entry);
+                                     struct list_head *__FAR head, struct list_head *__FAR entry) {
+    if (list_empty(head))
+        return;
+    if (list_is_singular(head) &&
+            (head->next != entry && head != entry))
+        return;
+    if (entry == head)
+        INIT_LIST_HEAD(list);
+    else
+        __list_cut_position(list, head, entry);
 }
 
 static inline void __list_splice(const struct list_head *__FAR list,
-				 struct list_head *__FAR prev,
-				 struct list_head *__FAR next)
-{
-	struct list_head *__FAR first = list->next;
-	struct list_head *__FAR last = list->prev;
+                                 struct list_head *__FAR prev,
+                                 struct list_head *__FAR next) {
+    struct list_head *__FAR first = list->next;
+    struct list_head *__FAR last = list->prev;
 
-	first->prev = prev;
-	prev->next = first;
+    first->prev = prev;
+    prev->next = first;
 
-	last->next = next;
-	next->prev = last;
+    last->next = next;
+    next->prev = last;
 }
 
 /**
@@ -294,10 +274,9 @@ static inline void __list_splice(const struct list_head *__FAR list,
  * @head: the place to add it in the first list.
  */
 static inline void list_splice(const struct list_head *__FAR list,
-				struct list_head *__FAR head)
-{
-	if (!list_empty(list))
-		__list_splice(list, head, head->next);
+                               struct list_head *__FAR head) {
+    if (!list_empty(list))
+        __list_splice(list, head, head->next);
 }
 
 /**
@@ -306,10 +285,9 @@ static inline void list_splice(const struct list_head *__FAR list,
  * @head: the place to add it in the first list.
  */
 static inline void list_splice_tail(struct list_head *__FAR list,
-				struct list_head *__FAR head)
-{
-	if (!list_empty(list))
-		__list_splice(list, head->prev, head);
+                                    struct list_head *__FAR head) {
+    if (!list_empty(list))
+        __list_splice(list, head->prev, head);
 }
 
 /**
@@ -320,12 +298,11 @@ static inline void list_splice_tail(struct list_head *__FAR list,
  * The list at @list is reinitialised
  */
 static inline void list_splice_init(struct list_head *__FAR list,
-				    struct list_head *__FAR head)
-{
-	if (!list_empty(list)) {
-		__list_splice(list, head, head->next);
-		INIT_LIST_HEAD(list);
-	}
+                                    struct list_head *__FAR head) {
+    if (!list_empty(list)) {
+        __list_splice(list, head, head->next);
+        INIT_LIST_HEAD(list);
+    }
 }
 
 /**
@@ -337,12 +314,11 @@ static inline void list_splice_init(struct list_head *__FAR list,
  * The list at @list is reinitialised
  */
 static inline void list_splice_tail_init(struct list_head *__FAR list,
-					 struct list_head *__FAR head)
-{
-	if (!list_empty(list)) {
-		__list_splice(list, head->prev, head);
-		INIT_LIST_HEAD(list);
-	}
+                                         struct list_head *__FAR head) {
+    if (!list_empty(list)) {
+        __list_splice(list, head->prev, head);
+        INIT_LIST_HEAD(list);
+    }
 }
 
 /**
@@ -525,7 +501,7 @@ static inline void list_splice_tail_init(struct list_head *__FAR list,
 		n = list_next_entry(pos, member);			\
 	     &pos->member != (head); 					\
 	     pos = n, n = list_next_entry(n, member))
-	     
+
 #define list_for_each_entry_safe_with_type(pos, n, type, head, member)			\
 	for (pos = list_first_entry(head, type, member),	\
 		n = list_next_entry(pos, member);			\

@@ -68,12 +68,12 @@ static unsigned char inline __onebyte(const struct softi2c_platform *__FAR i2c, 
 }
 
 char softi2c_init(const struct softi2c_platform *__FAR i2c) {
-  if (0 == gpio_init(i2c->gpio_ops, i2c->scl, GPIO_MODE_OUTPUT_OPENDRAIN)) {
-    return 0;
-  }
-  if (0 ==  gpio_init(i2c->gpio_ops, i2c->sda, GPIO_MODE_OUTPUT_OPENDRAIN)) {
-    return 0;
-  }
+    if (0 == gpio_init(i2c->gpio_ops, i2c->scl, GPIO_MODE_OUTPUT_OPENDRAIN)) {
+        return 0;
+    }
+    if (0 ==  gpio_init(i2c->gpio_ops, i2c->sda, GPIO_MODE_OUTPUT_OPENDRAIN)) {
+        return 0;
+    }
     __stop(i2c);
     return 1;
 }
@@ -169,8 +169,8 @@ __ret:
 }
 
 const struct i2c_operations softi2c_ops = {
-    .init = (i2c_init_func)softi2c_init,
-    .transmit = (i2c_transmit_func)softi2c_write_then_read,
+    (i2c_init_func)softi2c_init,
+    (i2c_transmit_func)softi2c_write_then_read,
 };
 
 ///  @}

@@ -20,7 +20,7 @@ enum hcf4052_channel {
 void hcf4052_init(hcf4052_platform_t platform);
 
 /// \brief hcf4052_select_channel 选择切换的通道.
-/// 
+///
 /// \param hcf4052_platform HCS4052平台接口
 /// \param channel 需要选择通道.
 void hcf4052_select_channel(hcf4052_platform_t platform, enum hcf4052_channel channel);
