@@ -7,26 +7,26 @@
 ///
 /// \param i2c 底层接口
 static void  inline __start(const struct softi2c_platform *__FAR i2c) {
-    i2c->scl(i2c->platform_data, 1);
-    i2c->sda(i2c->platform_data, 1);
-    i2c->sda(i2c->platform_data, 0);
-    i2c->scl(i2c->platform_data, 0);
+    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
+    gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
+    gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
 }
 
 /// \brief __start 在总线上产生I2C总线周期结束信号.
 ///
 /// \param i2c 底层接口
 static void  inline __stop(const struct softi2c_platform *__FAR i2c) {
-    i2c->sda(i2c->platform_data, 0);
-    i2c->scl(i2c->platform_data, 1);
-    i2c->sda(i2c->platform_data, 1);
+    gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
+    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
 }
 
 static void inline __restart(const struct softi2c_platform *__FAR i2c) {
-    i2c->sda(i2c->platform_data, 1);
-    i2c->scl(i2c->platform_data, 1);
-    i2c->sda(i2c->platform_data, 0);
-    i2c->scl(i2c->platform_data, 0);
+    gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
+    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
+    gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
 }
 
 /// \brief __onebit 向I2C总线产生一个BIT的信号, 并读取这个时钟总线上的数据.
@@ -37,14 +37,16 @@ static void inline __restart(const struct softi2c_platform *__FAR i2c) {
 /// \return !=0 这个时钟周期总线上读取的SDA=1; ==0; 这个时钟周期总线上读取到SDA=0.
 static char inline __onebit(const struct softi2c_platform *__FAR i2c, char bit) {
     unsigned char timeout = 0;
-    i2c->sda(i2c->platform_data, bit);
-    while (i2c->scl(i2c->platform_data, 1) == 0) {
-        if (timeout++ > 100) {
+    gpio_set_output(i2c->gpio_ops, i2c->sda, bit);
+    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    for (timeout = 0; timeout < 100; ++timeout) {
+        if (!gpio_input_is_high(i2c->gpio_ops, i2c->scl)) {
             break;
         }
     }
-    bit = i2c->sda(i2c->platform_data, bit);
-    i2c->scl(i2c->platform_data, 0);
+
+    bit = gpio_input_is_high(i2c->gpio_ops, i2c->sda);
+    gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
     return bit;
 }
 
@@ -66,9 +68,9 @@ static unsigned char inline __onebyte(const struct softi2c_platform *__FAR i2c, 
 }
 
 void softi2c_init(const struct softi2c_platform *__FAR i2c) {
-    i2c->init(i2c->platform_data);
-    i2c->sda(i2c->platform_data, 1);
-    i2c->scl(i2c->platform_data, 1);
+    gpio_init(i2c->gpio_ops, i2c->scl, GPIO_MODE_OUTPUT_OPENDRAIN);
+    gpio_init(i2c->gpio_ops, i2c->sda, GPIO_MODE_OUTPUT_OPENDRAIN);
+    __stop(i2c);
 }
 
 unsigned char softi2c_write(const struct softi2c_platform *__FAR i2c,
@@ -160,5 +162,11 @@ __ret:
     __stop(i2c);
     return readed + written;
 }
+
+struct i2c_ops softi2c_ops = {
+    .init = softi2c_init,
+    .transmit = softi2c_write_then_read,
+};
+
 ///  @}
 

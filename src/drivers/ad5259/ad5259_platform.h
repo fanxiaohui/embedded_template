@@ -7,7 +7,7 @@
 struct ad5259_platform {
     uint32_t nominal_resistance;
     uint8_t addr;
-    i2c_t bus;
+    const struct i2c_bus *bus;
 };
 
 struct ad5259 {

@@ -5,43 +5,16 @@
 #define B_BIT 0x02
 #define INH_BIT 0x04
 
-static void set_ctrl_pin(struct hcf4052_platform const *__FAR platform, char pin, char is_high) {
-    unsigned char bit;
-    unsigned char *__FAR dat = platform->platform_data;
-    TEST_ASSERT(pin == HCF4052_CTRL_PIN_A
-                || pin == HCF4052_CTRL_PIN_B
-                || pin == HCF4052_CTRL_PIN_INH);
-
-    if (pin == HCF4052_CTRL_PIN_A) {
-        bit = A_BIT;
-    } else if (pin == HCF4052_CTRL_PIN_B) {
-        bit = B_BIT;
-    } else if (pin == HCF4052_CTRL_PIN_INH) {
-        bit = INH_BIT;
-    }
-
-    if (is_high) {
-        *dat |= bit;
-    } else {
-        *dat &= ~bit;
-    }
-}
-
-static unsigned char dat;
 static const struct hcf4052_platform hcf4052_platform_test = {
-    .platform_data = &dat,
-    .set_ctrl_pin = set_ctrl_pin,
 };
 
 
 static char bits_is_set(struct hcf4052_platform const *__FAR platform, unsigned char bits) {
-    unsigned char *__FAR dat = platform->platform_data;
-    return (*dat & bits) == bits;
+    return 0;
 }
 
 static char bits_is_clear(struct hcf4052_platform const *__FAR platform, unsigned char bits) {
-    unsigned char *__FAR dat = platform->platform_data;
-    return (*dat & bits) == 0;
+    return 0;
 }
 
 

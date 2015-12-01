@@ -6,6 +6,7 @@ add_subdirectory(async)
 add_subdirectory(ringbuffer)
 add_subdirectory(drivers)
 add_subdirectory(i2c)
+add_subdirectory(gpio)
 
 add_executable(
     async_example
@@ -29,6 +30,7 @@ target_link_libraries(
     ringbuffer
     unity
     drivers
+    gpio
 )
 
 
