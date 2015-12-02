@@ -9,7 +9,7 @@
 
 typedef const struct i2c_bus *__FAR i2c_bus_t;
 
-inline char i2c_init(i2c_bus_t bus);
+inline uint8_t i2c_init(i2c_bus_t bus);
 inline uint8_t i2c_transmit(i2c_bus_t bus,
                             uint8_t addr,
                             const uint8_t *__FAR w,

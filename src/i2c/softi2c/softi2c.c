@@ -36,7 +36,7 @@ static void inline __restart(const struct softi2c_platform *__FAR i2c) {
 ///
 /// \return !=0 这个时钟周期总线上读取的SDA=1; ==0; 这个时钟周期总线上读取到SDA=0.
 static char inline __onebit(const struct softi2c_platform *__FAR i2c, char bit) {
-    unsigned char timeout = 0;
+    uint8_t timeout = 0;
     gpio_set_output(i2c->gpio_ops, i2c->sda, bit);
     gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
     for (timeout = 0; timeout < 100; ++timeout) {
@@ -56,9 +56,9 @@ static char inline __onebit(const struct softi2c_platform *__FAR i2c, char bit) 
 /// \param dat 需要发送的数据.
 ///
 /// \return 这个字节周期总线上读取到的数据.
-static unsigned char inline __onebyte(const struct softi2c_platform *__FAR i2c, unsigned char dat) {
-    unsigned char ret;
-    unsigned char bit;
+static uint8_t inline __onebyte(const struct softi2c_platform *__FAR i2c, uint8_t dat) {
+    uint8_t ret;
+    uint8_t bit;
     for (ret = 0, bit = 0x80; bit != 0x00; bit = bit >> 1) {
         if (__onebit(i2c, dat & bit)) {
             ret |= bit;
@@ -67,7 +67,7 @@ static unsigned char inline __onebyte(const struct softi2c_platform *__FAR i2c, 
     return ret;
 }
 
-char softi2c_init(const struct softi2c_platform *__FAR i2c) {
+uint8_t softi2c_init(const struct softi2c_platform *__FAR i2c) {
     if (0 == gpio_init(i2c->gpio_ops, i2c->scl, GPIO_MODE_OUTPUT_OPENDRAIN)) {
         return 0;
     }
@@ -78,11 +78,11 @@ char softi2c_init(const struct softi2c_platform *__FAR i2c) {
     return 1;
 }
 
-unsigned char softi2c_write(const struct softi2c_platform *__FAR i2c,
-                            unsigned char addr,
-                            const unsigned char *__FAR dat,
-                            unsigned char len) {
-    unsigned char i;
+uint8_t softi2c_write(const struct softi2c_platform *__FAR i2c,
+                      uint8_t addr,
+                      const uint8_t *__FAR dat,
+                      uint8_t len) {
+    uint8_t i;
 
     __start(i2c); // start
     __onebyte(i2c, addr << 1); // addr + Write
@@ -101,11 +101,11 @@ unsigned char softi2c_write(const struct softi2c_platform *__FAR i2c,
     return i;
 }
 
-unsigned char softi2c_read(const struct softi2c_platform *__FAR i2c,
-                           unsigned char addr,
-                           unsigned char *__FAR dat,
-                           unsigned char len) {
-    unsigned char i;
+uint8_t softi2c_read(const struct softi2c_platform *__FAR i2c,
+                     uint8_t addr,
+                     uint8_t *__FAR dat,
+                     uint8_t len) {
+    uint8_t i;
 
     __start(i2c); // start
     __onebyte(i2c, (addr << 1)  + 1); // addr + Read
@@ -123,14 +123,14 @@ unsigned char softi2c_read(const struct softi2c_platform *__FAR i2c,
     return i;
 }
 
-unsigned char softi2c_write_then_read(const struct softi2c_platform *__FAR i2c,
-                                      unsigned char addr,
-                                      const unsigned char *__FAR w,
-                                      unsigned char wlen,
-                                      unsigned char *__FAR r,
-                                      unsigned char rlen) {
-    unsigned char written = 0;
-    unsigned char readed = 0;
+uint8_t softi2c_write_then_read(const struct softi2c_platform *__FAR i2c,
+                                uint8_t addr,
+                                const uint8_t *__FAR w,
+                                uint8_t wlen,
+                                uint8_t *__FAR r,
+                                uint8_t rlen) {
+    uint8_t written = 0;
+    uint8_t readed = 0;
 
     __start(i2c); // start
     if (w != 0 && wlen != 0) { // write

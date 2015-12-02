@@ -1,6 +1,6 @@
 #include "i2c_platform.h"
 
-inline char i2c_init(const struct i2c_bus *__FAR bus) {
+inline uint8_t i2c_init(const struct i2c_bus *__FAR bus) {
     return bus->ops->init(bus->private_data);
 }
 

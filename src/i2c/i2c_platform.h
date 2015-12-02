@@ -3,7 +3,7 @@
 
 #include "i2c.h"
 
-typedef char (*i2c_init_func)(void *__FAR private_data);
+typedef uint8_t (*i2c_init_func)(void *__FAR private_data);
 typedef uint8_t (*i2c_transmit_func)(void *__FAR private_data,
                                      uint8_t addr,
                                      const uint8_t *__FAR w,
