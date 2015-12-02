@@ -1,8 +1,7 @@
 #include <stdio.h>
 #include "sd2405al_platform.h"
 
-#include "ucos_ii.h"
-#include "second_datetime.h"
+#include "misc/second_datetime.h"
 
 //#define dprintf (void)printf
 #define dprintf (void)

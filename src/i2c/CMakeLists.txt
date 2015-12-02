@@ -5,7 +5,7 @@ include_directories(
 set(
     I2C_SOURCE
     i2c.c
-    softi2c/softi2c.c
+    softi2c.c
 )
 
 add_library(

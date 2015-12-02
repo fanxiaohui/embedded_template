@@ -3,17 +3,16 @@ include_directories(
 )
 
 set(
-    SPI_SOURCE
-    spi.c
-    softspi.c
+    MISC_SOURCE
+    second_datetime.c
 )
 
 add_library(
-    spi
-    ${SPI_SOURCE}
+    misc
+    ${MISC_SOURCE}
 )
 
 if(COMMAND add_pc_lint)
-    add_pc_lint(spi ${SPI_SOURCE})
+    add_pc_lint(misc ${MISC_SOURCE})
 endif(COMMAND add_pc_lint)
 
