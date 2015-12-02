@@ -1,13 +1,9 @@
 #include <stdio.h>
 #include "sd2405al_platform.h"
-
 #include "misc/second_datetime.h"
 
 //#define dprintf (void)printf
 #define dprintf (void)
-
-#define DELAY_MS 100
-
 
 // 0x32 => 32(0x20)
 static uint8_t bcd_to_hex(uint8_t bcd) {
@@ -33,26 +29,26 @@ static uint8_t hex_to_bcd(uint8_t hex) {
     return (h << 4) | (hex % 10);
 }
 
-static char write_regs(const struct sd2405_platform *__FAR platform,
-                       const uint8_t *reg_and_dat,
-                       uint8_t len) {
+static uint8_t write_regs(const struct sd2405_platform *__FAR platform,
+                          const uint8_t *reg_and_dat,
+                          uint8_t len) {
     if (len != i2c_transmit(&platform->bus, platform->addr, reg_and_dat, len, 0, 0)) {
         return 0;
     }
     return 1;
 }
 
-static char read_regs(const struct sd2405_platform *__FAR platform,
-                      uint8_t reg,
-                      uint8_t *__FAR dat,
-                      uint8_t len) {
+static uint8_t read_regs(const struct sd2405_platform *__FAR platform,
+                         uint8_t reg,
+                         uint8_t *__FAR dat,
+                         uint8_t len) {
     if (len + 1 != i2c_transmit(&platform->bus, platform->addr, &reg, 1, dat, len)) {
         return 0;
     }
     return 1;
 }
 
-static char write_enable(const struct sd2405_platform *__FAR platform, char is_enable) {
+static uint8_t write_enable(const struct sd2405_platform *__FAR platform, uint8_t is_enable) {
     if (is_enable) {
         uint8_t dat[2];
         dat[0] = 0x10;
@@ -71,7 +67,7 @@ static char write_enable(const struct sd2405_platform *__FAR platform, char is_e
     return 1;
 }
 
-char sd2405_init(const struct sd2405_platform *__FAR platform) {
+uint8_t sd2405_init(const struct sd2405_platform *__FAR platform) {
     if (platform == 0) {
         return 0;
     }
@@ -79,7 +75,7 @@ char sd2405_init(const struct sd2405_platform *__FAR platform) {
 }
 
 
-char sd2405_write_time(const struct sd2405_platform *__FAR platform, uint32_t seconds) {
+uint8_t sd2405_write_time(const struct sd2405_platform *__FAR platform, uint32_t seconds) {
     datetime_t t;
     uint8_t reg_and_dat[8];
 
@@ -109,7 +105,7 @@ char sd2405_write_time(const struct sd2405_platform *__FAR platform, uint32_t se
 }
 
 
-char sd2405_read_time(const struct sd2405_platform *__FAR platform, uint32_t *__FAR seconds) {
+uint8_t sd2405_read_time(const struct sd2405_platform *__FAR platform, uint32_t *__FAR seconds) {
     uint8_t treg[7];
     datetime_t t;
 
@@ -134,10 +130,10 @@ char sd2405_read_time(const struct sd2405_platform *__FAR platform, uint32_t *__
     return 1;
 }
 
-char sd2405_store_data(const struct sd2405_platform *__FAR platform,
-                       const uint8_t *__FAR dat,
-                       uint8_t offset,
-                       uint8_t len) {
+uint8_t sd2405_store_data(const struct sd2405_platform *__FAR platform,
+                          const uint8_t *__FAR dat,
+                          uint8_t offset,
+                          uint8_t len) {
     uint8_t i;
     uint8_t reg_and_dat[13];
 
@@ -163,10 +159,10 @@ char sd2405_store_data(const struct sd2405_platform *__FAR platform,
     return 1;
 }
 
-char sd2405_restore_data(const struct sd2405_platform *__FAR platform,
-                         uint8_t *__FAR dat,
-                         uint8_t offset,
-                         uint8_t len) {
+uint8_t sd2405_restore_data(const struct sd2405_platform *__FAR platform,
+                            uint8_t *__FAR dat,
+                            uint8_t offset,
+                            uint8_t len) {
     if ((!dat) || (offset + len > 12)) {
         return 0;
     }
