@@ -48,38 +48,59 @@ static uint8_t read_regs(const struct sd2405_platform *__FAR platform,
     return 1;
 }
 
-static uint8_t write_enable(const struct sd2405_platform *__FAR platform, uint8_t is_enable) {
+static uint8_t write_enable(struct sd2405 *__FAR dev, uint8_t is_enable) {
     if (is_enable) {
         uint8_t dat[2];
         dat[0] = 0x10;
-        dat[1] = 0x80;
-        if (!write_regs(platform, dat, 2)) {
+        dat[1] = dev->ctr2 | 0x80;
+        if (!write_regs(dev->platform, dat, 2)) {
             return 0;
         }
 
+        dev->ctr2 = dat[1];
+
         dat[0] = 0x0F;
-        dat[1] = 0x84;
-        if (!write_regs(platform, dat, 2)) {
+        dat[1] = dev->ctr1 | 0x84;
+        if (!write_regs(dev->platform, dat, 2)) {
             return 0;
         }
+        dev->ctr1 = dat[1];
+    } else {
+        uint8_t dat[3];
+        dat[0] = 0x0F;
+        dat[1] = dev->ctr1 & (~0x84);
+        dat[2] = dev->ctr2 & (~0x80);
+        if (!write_regs(dev->platform, dat, 3)) {
+            return 0;
+        }
+        dev->ctr1 = dat[1];
+        dev->ctr2 = dat[2];
     }
 
     return 1;
 }
 
-uint8_t sd2405_init(const struct sd2405_platform *__FAR platform) {
-    if (platform == 0) {
+uint8_t sd2405_init(struct sd2405 *__FAR dev) {
+    uint8_t dat[2];
+    if (0 == i2c_init(&dev->platform->bus)) {
         return 0;
     }
-    return i2c_init(&platform->bus);
+
+    if (0 == read_regs(dev->platform, 0x0F, dat, 2)) {
+        return 0;
+    }
+
+    dev->ctr1 = dat[0];
+    dev->ctr2 = dat[1];
+    return 1;
 }
 
 
-uint8_t sd2405_write_time(const struct sd2405_platform *__FAR platform, uint32_t seconds) {
+uint8_t sd2405_write_time(struct sd2405 *__FAR dev, uint32_t seconds) {
     datetime_t t;
     uint8_t reg_and_dat[8];
 
-    if (!write_enable(platform, 1)) {
+    if (!write_enable(dev, 1)) {
         return 0;
     }
 
@@ -94,18 +115,18 @@ uint8_t sd2405_write_time(const struct sd2405_platform *__FAR platform, uint32_t
     reg_and_dat[6] = hex_to_bcd(t.month);
     reg_and_dat[7] = hex_to_bcd(t.year);
 
-    if (!write_regs(platform, reg_and_dat, sizeof(reg_and_dat))) {
-        (void)write_enable(platform, 0);
+    if (!write_regs(dev->platform, reg_and_dat, sizeof(reg_and_dat))) {
+        (void)write_enable(dev, 0);
         return 0;
     }
 
-    (void)write_enable(platform, 0);
+    (void)write_enable(dev, 0);
 
     return 1;
 }
 
 
-uint8_t sd2405_read_time(const struct sd2405_platform *__FAR platform, uint32_t *__FAR seconds) {
+uint8_t sd2405_read_time(struct sd2405 *__FAR dev, uint32_t *__FAR seconds) {
     uint8_t treg[7];
     datetime_t t;
 
@@ -113,7 +134,7 @@ uint8_t sd2405_read_time(const struct sd2405_platform *__FAR platform, uint32_t 
         return 0;
     }
 
-    if (!read_regs(platform, 0x00, treg, sizeof(treg))) {
+    if (!read_regs(dev->platform, 0x00, treg, sizeof(treg))) {
         return 0;
     }
 
@@ -130,7 +151,7 @@ uint8_t sd2405_read_time(const struct sd2405_platform *__FAR platform, uint32_t 
     return 1;
 }
 
-uint8_t sd2405_store_data(const struct sd2405_platform *__FAR platform,
+uint8_t sd2405_store_data(struct sd2405 *__FAR dev,
                           const uint8_t *__FAR dat,
                           uint8_t offset,
                           uint8_t len) {
@@ -141,7 +162,7 @@ uint8_t sd2405_store_data(const struct sd2405_platform *__FAR platform,
         return 0;
     }
 
-    if (!write_enable(platform, 1)) {
+    if (!write_enable(dev, 1)) {
         return 0;
     }
 
@@ -150,22 +171,109 @@ uint8_t sd2405_store_data(const struct sd2405_platform *__FAR platform,
         reg_and_dat[i + 1] = dat[i];
     }
 
-    if (!write_regs(platform, reg_and_dat, len + 1)) {
-        (void)write_enable(platform, 0);
+    if (!write_regs(dev->platform, reg_and_dat, len + 1)) {
+        (void)write_enable(dev, 0);
         return 0;
     }
 
-    (void)write_enable(platform, 0);
+    (void)write_enable(dev, 0);
     return 1;
 }
 
-uint8_t sd2405_restore_data(const struct sd2405_platform *__FAR platform,
+uint8_t sd2405_restore_data(struct sd2405 *__FAR dev,
                             uint8_t *__FAR dat,
                             uint8_t offset,
                             uint8_t len) {
     if ((!dat) || (offset + len > 12)) {
         return 0;
     }
-    return read_regs(platform, (uint8_t)(0x14 + offset), dat, len);
+    return read_regs(dev->platform, (uint8_t)(0x14 + offset), dat, len);
+}
+
+
+uint8_t sd2405_dump_regs(struct sd2405 *__FAR dev, uint8_t __FAR dat[32]) {
+    return read_regs(dev->platform, 0, dat, 32);
+}
+
+uint8_t sd2405_config_interrupt(struct sd2405 *__FAR dev, enum sd2405_interrupt_type int_type, enum sd2405_interrupt_single single) {
+    uint8_t ret = 0;
+    uint8_t dat[2];
+    if (!write_enable(dev, 1)) {
+        return 0;
+    }
+    dat[0] = 0x10; // CTR2
+    dat[1] = dev->ctr2 | 0x08;
+
+    if (single == SD2405_INTERRUPT_SINGLE_PAUSE) {
+        dat[1] |= 0x40;
+    }
+
+    switch (int_type ) {
+    case SD2405_INTERRUPT_DISABLE:
+        dat[1] &= ~(0x30);
+        break;
+    case SD2405_INTERRUPT_ALARM:
+        dat[1] |= 0x10 | 0x02;
+        break;
+    case SD2405_INTERRUPT_FREQUENCY:
+        dat[1] |= 0x20 | 0x01;
+        break;
+    case SD2405_INTERRUPT_COUNTDOWN:
+        dat[1] |= 0x30 | 0x04;
+        break;
+    default:
+        goto __ret;
+    }
+
+    ret = write_regs(dev->platform, dat, sizeof(dat));
+    if (ret) {
+        dev->ctr2 = dat[1];
+    }
+__ret:
+    (void)write_enable(dev, 0);
+    return ret;
+}
+
+uint8_t sd2405_clear_interrupt(struct sd2405 *__FAR dev) {
+    uint8_t ret;
+    uint8_t reg_and_dat[2];
+    if (!write_enable(dev, 1)) {
+        return 0;
+    }
+
+    reg_and_dat[0] = 0x0F;
+    reg_and_dat[1] = dev->ctr1 & (~0x03);
+    ret = write_regs(dev->platform, reg_and_dat, 2);
+    (void)write_enable(dev, 0);
+    return ret;
+}
+
+uint8_t sd2405_set_alarm(struct sd2405 *__FAR dev, uint32_t seconds) {
+    datetime_t t;
+    uint8_t reg_and_dat[9];
+
+    if (!write_enable(dev, 1)) {
+        return 0;
+    }
+
+    (void)second_to_datetime(&t, seconds);
+
+    reg_and_dat[0] = 0x07; // alarm register
+    reg_and_dat[1] = 0;
+    reg_and_dat[2] = hex_to_bcd(t.minute);
+    reg_and_dat[3] = hex_to_bcd(t.hour);
+    reg_and_dat[4] = 0;
+    reg_and_dat[5] = hex_to_bcd(t.day);
+    reg_and_dat[6] = hex_to_bcd(t.month);
+    reg_and_dat[7] = hex_to_bcd(t.year);
+    reg_and_dat[8] = 0x76; // alarm match Year Month Day Hour Minite
+
+    if (!write_regs(dev->platform, reg_and_dat, sizeof(reg_and_dat))) {
+        (void)write_enable(dev, 0);
+        return 0;
+    }
+
+    (void)write_enable(dev, 0);
+    return 1;
 }
 

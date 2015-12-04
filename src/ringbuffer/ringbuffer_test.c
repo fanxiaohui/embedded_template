@@ -39,7 +39,7 @@ TEST(ringbuffer, aaa) {
     }
 
 
-    (void)strcpy(buf1, "Hello world\n");
+    (void)strcpy((char *)buf1, "Hello world\n");
     TEST_ASSERT_EQUAL(strlen(buf1) + 1, ringbuffer_write(&forTest, buf1, strlen(buf1) + 1));
     TEST_ASSERT_EQUAL(strlen(buf1) + 1, ringbuffer_read_string(&forTest, buf2, sizeof(buf2)));
     TEST_ASSERT_EQUAL_STRING(buf1, buf2);

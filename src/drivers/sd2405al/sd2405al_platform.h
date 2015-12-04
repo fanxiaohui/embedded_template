@@ -9,5 +9,11 @@ struct sd2405_platform {
     const struct i2c_bus bus;
 };
 
+struct sd2405 {
+    const struct sd2405_platform *__FAR platform;
+    uint8_t ctr1;
+    uint8_t ctr2;
+};
+
 #endif
 

@@ -5,8 +5,8 @@
 /// \date 2015-10-29
 
 #include "./private.h"
-#include <stdio.h>
 #include <list/list.h>
+#include <stdio.h>
 
 static LIST_HEAD(free_list);
 

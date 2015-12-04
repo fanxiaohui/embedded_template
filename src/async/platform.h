@@ -15,6 +15,10 @@
 #include "./platform_posix.h"
 #endif
 
+#if defined(__UCOS__)
+#include "platform_ucos.h"
+#endif
+
 /*
 /// \brief async_assert_info ¶ÏÑÔÊä³ö.
 ///

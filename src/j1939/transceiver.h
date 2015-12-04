@@ -13,10 +13,10 @@ struct can_extended_frame {
     uint8_t dat[8];
 };
 
-typedef const struct can_transceiver *__FAR can_transceiver_t;
+typedef const struct transceiver *__FAR transceiver_t;
 
-inline uint8_t can_transceiver_init(can_transceiver_t can, uint32_t baudrate);
-inline uint8_t can_transceiver_recv(can_transceiver_t can, struct can_extended_frame *__FAR frame);
-inline uint8_t can_transceiver_send(can_transceiver_t can, const struct can_extended_frame *__FAR frame);
+inline uint8_t transceiver_init(transceiver_t can, uint32_t baudrate);
+inline uint8_t transceiver_recv(transceiver_t can, struct can_extended_frame *__FAR frame);
+inline uint8_t transceiver_send(transceiver_t can, const struct can_extended_frame *__FAR frame);
 
 #endif
