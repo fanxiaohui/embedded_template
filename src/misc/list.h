@@ -17,9 +17,7 @@ struct list_head {
 };
 
 
-#define container_of(ptr, type, member) ({ \
-     const typeof( ((type *__FAR)0)->member ) *__mptr = (ptr); \
-     (type *__FAR)( (char *__FAR)__mptr - offsetof(type,member) );})
+#define container_of(ptr, type, member) ((type *__FAR)(((char *__FAR)ptr) - offsetof(type, member)))
 
 /*
  * Simple doubly linked list implementation.

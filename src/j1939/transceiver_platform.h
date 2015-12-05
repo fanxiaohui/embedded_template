@@ -5,7 +5,7 @@
 
 
 struct transceiver_operations {
-    uint8_t (*init)(void *__FAR private_data, uint32_t baudrate);
+    uint8_t (*init)(void *__FAR private_data, uint32_t baudrate, transceiver_received_callback cb, void *__FAR dat, struct can_extended_frame *frame);
     uint8_t (*recv)(void *__FAR private_data, struct can_extended_frame *__FAR frame);
     uint8_t (*send)(void *__FAR private_data, const struct can_extended_frame *__FAR frame);
     uint8_t (*set_recv_filter)(void *__FAR private_data, uint32_t filter, uint32_t mask);

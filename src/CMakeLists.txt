@@ -7,12 +7,12 @@ set(SOURCES "")
 set(TEST_SOURCES "")
 
 add_subdirectory(async)
-add_subdirectory(ringbuffer)
 add_subdirectory(drivers)
 add_subdirectory(i2c)
 add_subdirectory(spi)
 add_subdirectory(gpio)
 add_subdirectory(misc)
+add_subdirectory(ringbuffer)
 
 add_library(
     embedded
@@ -31,8 +31,8 @@ add_executable(
 )
 target_link_libraries(
     unit_test
-    embedded
     embedded_test
+    embedded
     unity
 )
 
