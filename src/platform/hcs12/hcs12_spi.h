@@ -7,7 +7,7 @@
 
 typedef const struct hcs12_spi_platform *__FAR hcs12_spi_t;
 
-char hcs12_spi_init(hcs12_spi_t spi, uint8_t flags);
-char hcs12_spi_transfer(hcs12_spi_t spi, uint8_t *dat);
+uint8_t hcs12_spi_init(hcs12_spi_t spi, uint8_t flags);
+uint8_t hcs12_spi_transfer(hcs12_spi_t spi, uint8_t *dat);
 
 #endif

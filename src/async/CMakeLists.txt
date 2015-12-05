@@ -6,3 +6,11 @@ add_library(
     platform_posix.c
 )
 
+
+set(SOURCES
+    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/async.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/event.c
+    PARENT_SCOPE
+)
+

@@ -2,6 +2,7 @@
 #define __PLATFORM_POSIX_H__
 
 #include <stdint.h>
+#include <sys/types.h>
 #include <semaphore.h>
 #include <pthread.h>
 #include <math.h>

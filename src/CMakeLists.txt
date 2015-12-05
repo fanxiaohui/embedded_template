@@ -3,7 +3,10 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
 )
 
-#add_subdirectory(async)
+set(SOURCES "")
+set(TEST_SOURCES "")
+
+add_subdirectory(async)
 add_subdirectory(ringbuffer)
 add_subdirectory(drivers)
 add_subdirectory(i2c)
@@ -22,6 +25,13 @@ add_subdirectory(misc)
 #    pthread
 #    m
 #)
+
+message("SOURCES" ${SOURCES})
+
+add_library(
+    embedded
+    ${SOURCES}
+)
 
 
 add_executable(

@@ -16,7 +16,7 @@ struct hcs12_i2c_regs {
 
 struct hcs12_i2c_platform {
     struct hcs12_i2c_regs *regs;
-    unsigned char freq_div;
+    uint8_t freq_div;
 };
 
 struct hcs12_i2c {
@@ -24,22 +24,22 @@ struct hcs12_i2c {
     const struct hcs12_i2c_platform *platform;
     union {
         struct {
-            unsigned char aquired: 1;
-            unsigned char txing: 1;
-            unsigned char rxing: 1;
-            unsigned char txing_addr: 1;
-            unsigned char txed_addr: 1;
+            uint8_t aquired: 1;
+            uint8_t txing: 1;
+            uint8_t rxing: 1;
+            uint8_t txing_addr: 1;
+            uint8_t txed_addr: 1;
         } bits;
-        unsigned char byte;
+        uint8_t byte;
     } flags;
 
-    const unsigned char *__FAR tx_data;
-    unsigned char *__FAR rx_data;
-    unsigned char tx_length;
-    unsigned char tx_index;
-    unsigned char rx_length;
-    unsigned char rx_index;
-    unsigned char slave_addr;
+    const uint8_t *__FAR tx_data;
+    uint8_t *__FAR rx_data;
+    uint8_t tx_length;
+    uint8_t tx_index;
+    uint8_t rx_length;
+    uint8_t rx_index;
+    uint8_t slave_addr;
 };
 
 void hcs12_i2c_isr(struct hcs12_i2c *__FAR i2c);

@@ -22,10 +22,10 @@ uint8_t hcs12_i2c_init(hcs12_i2c_t i2c);
 /// \param len 需要写入的数据的长度.
 ///
 /// \return 写入的数据的长度.
-unsigned char hcs12_i2c_write(hcs12_i2c_t i2c,
-                              unsigned char addr,
-                              const unsigned char *__FAR dat,
-                              unsigned char len);
+uint8_t hcs12_i2c_write(hcs12_i2c_t i2c,
+                        uint8_t addr,
+                        const uint8_t *__FAR dat,
+                        uint8_t len);
 
 /// \brief hcs12_i2c_read I2C读取数据.
 ///
@@ -35,10 +35,10 @@ unsigned char hcs12_i2c_write(hcs12_i2c_t i2c,
 /// \param len 期望读取的数据长度.
 ///
 /// \return 已读取的数据的长度.
-unsigned char hcs12_i2c_read(hcs12_i2c_t i2c,
-                             unsigned char addr,
-                             unsigned char *__FAR dat,
-                             unsigned char len);
+uint8_t hcs12_i2c_read(hcs12_i2c_t i2c,
+                       uint8_t addr,
+                       uint8_t *__FAR dat,
+                       uint8_t len);
 
 /// \brief hcs12_i2c_write_then_read 先写后读.
 ///
@@ -50,12 +50,12 @@ unsigned char hcs12_i2c_read(hcs12_i2c_t i2c,
 /// \param rlen 期望读取的数据长度.
 ///
 /// \return 写入和读取的数据的字节数相加.
-unsigned char hcs12_i2c_write_then_read(hcs12_i2c_t i2c,
-                                        unsigned char addr,
-                                        const unsigned char *__FAR w,
-                                        unsigned char wlen,
-                                        unsigned char *__FAR r,
-                                        unsigned char rlen);
+uint8_t hcs12_i2c_write_then_read(hcs12_i2c_t i2c,
+                                  uint8_t addr,
+                                  const uint8_t *__FAR w,
+                                  uint8_t wlen,
+                                  uint8_t *__FAR r,
+                                  uint8_t rlen);
 
 ///  @}
 #endif

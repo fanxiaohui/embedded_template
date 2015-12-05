@@ -27,7 +27,7 @@ static void deinit_regs(const struct hcs12_i2c_platform *plat) {
     plat->regs->control.Byte = 0;
 }
 
-static char acquire_i2c(struct hcs12_i2c *__FAR i2c) {
+static uint8_t acquire_i2c(struct hcs12_i2c *__FAR i2c) {
     int i = 0;
     OS_CPU_SR cpu_sr = 0;
 
@@ -56,8 +56,8 @@ static void release_i2c(struct hcs12_i2c *__FAR i2c) {
     OS_EXIT_CRITICAL();
 }
 
-static unsigned char wait_txing(struct hcs12_i2c *__FAR i2c) {
-    unsigned char i = 0;
+static uint8_t wait_txing(struct hcs12_i2c *__FAR i2c) {
+    uint8_t i = 0;
     OS_CPU_SR cpu_sr = 0;
 
     OS_ENTER_CRITICAL();
@@ -76,8 +76,8 @@ static unsigned char wait_txing(struct hcs12_i2c *__FAR i2c) {
     return i;
 }
 
-static unsigned char wait_rxing(struct hcs12_i2c *__FAR i2c) {
-    unsigned char i = 0;
+static uint8_t wait_rxing(struct hcs12_i2c *__FAR i2c) {
+    uint8_t i = 0;
     OS_CPU_SR cpu_sr = 0;
 
     OS_ENTER_CRITICAL();
@@ -96,8 +96,8 @@ static unsigned char wait_rxing(struct hcs12_i2c *__FAR i2c) {
     return i;
 }
 
-char hcs12_i2c_start_and_tx_addr(struct hcs12_i2c *__FAR i2c) {
-    unsigned char addr;
+uint8_t hcs12_i2c_start_and_tx_addr(struct hcs12_i2c *__FAR i2c) {
+    uint8_t addr;
     OS_CPU_SR cpu_sr = 0;
     unsigned int i = 0;
     const struct hcs12_i2c_platform *plat = i2c->platform;
@@ -132,10 +132,10 @@ char hcs12_i2c_start_and_tx_addr(struct hcs12_i2c *__FAR i2c) {
     return 0;
 }
 
-unsigned char hcs12_i2c_write(struct hcs12_i2c *__FAR i2c,
-                              unsigned char addr,
-                              const unsigned char *__FAR dat,
-                              unsigned char len) {
+uint8_t hcs12_i2c_write(struct hcs12_i2c *__FAR i2c,
+                        uint8_t addr,
+                        const uint8_t *__FAR dat,
+                        uint8_t len) {
     if (!acquire_i2c(i2c)) return 0;
 
     i2c->tx_data = dat;
@@ -155,10 +155,10 @@ unsigned char hcs12_i2c_write(struct hcs12_i2c *__FAR i2c,
     return len;
 }
 
-unsigned char hcs12_i2c_read(struct hcs12_i2c *__FAR i2c,
-                             unsigned char addr,
-                             unsigned char *__FAR dat,
-                             unsigned char len) {
+uint8_t hcs12_i2c_read(struct hcs12_i2c *__FAR i2c,
+                       uint8_t addr,
+                       uint8_t *__FAR dat,
+                       uint8_t len) {
     if (!acquire_i2c(i2c)) return 0;
 
     i2c->tx_length = 0;
@@ -178,13 +178,13 @@ unsigned char hcs12_i2c_read(struct hcs12_i2c *__FAR i2c,
 
 }
 
-unsigned char hcs12_i2c_write_then_read(hcs12_i2c_t i2c,
-                                        unsigned char addr,
-                                        const unsigned char *__FAR w,
-                                        unsigned char wlen,
-                                        unsigned char *__FAR r,
-                                        unsigned char rlen) {
-    unsigned char len;
+uint8_t hcs12_i2c_write_then_read(hcs12_i2c_t i2c,
+                                  uint8_t addr,
+                                  const uint8_t *__FAR w,
+                                  uint8_t wlen,
+                                  uint8_t *__FAR r,
+                                  uint8_t rlen) {
+    uint8_t len;
     if (!acquire_i2c(i2c)) return 0;
 
     i2c->tx_length = wlen;
@@ -283,7 +283,7 @@ void hcs12_i2c_isr(struct hcs12_i2c *__FAR i2c) {
 
         // 发送下一个数据.
         {
-            unsigned char c = i2c->tx_data[i2c->tx_index];
+            uint8_t c = i2c->tx_data[i2c->tx_index];
             plat->regs->dat.Byte = c;
         }
         goto __exit;

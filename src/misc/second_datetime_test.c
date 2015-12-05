@@ -21,7 +21,7 @@ TEST_TEAR_DOWN(second_datetime) {
 }
 
 TEST(second_datetime, from_second_to_datetime) {
-    second_t second;
+    uint32_t second;
     datetime_t t;
 
     second = 439846555;
@@ -37,7 +37,7 @@ TEST(second_datetime, from_second_to_datetime) {
 
 
 TEST(second_datetime, from_datetime_to_second) {
-    second_t second = 439846555;
+    uint32_t second = 439846555;
     datetime_t t = {
         13,
         12,
@@ -53,7 +53,7 @@ TEST(second_datetime, from_datetime_to_second) {
 }
 
 TEST(second_datetime, from_datetime_to_second_with_invalid_datetime) {
-    second_t second = 439846555;
+    uint32_t second = 439846555;
     datetime_t t = {
         13,
         12,
@@ -67,7 +67,7 @@ TEST(second_datetime, from_datetime_to_second_with_invalid_datetime) {
 }
 
 TEST(second_datetime, null_paramters) {
-    second_t second = 439846555;
+    uint32_t second = 439846555;
     datetime_t t = {
         13,
         12,
@@ -86,7 +86,7 @@ TEST(second_datetime, null_paramters) {
 
 
 TEST(second_datetime, datetime_is_valid) {
-    second_t second;
+    uint32_t second;
     datetime_t t;
 
     second = 439846555;

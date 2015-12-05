@@ -1,6 +1,6 @@
 #include "hcs12_spi_platform.h"
 
-char hcs12_spi_init(const struct hcs12_spi_platform *__FAR platform, uint8_t flags) {
+uint8_t hcs12_spi_init(const struct hcs12_spi_platform *__FAR platform, uint8_t flags) {
     uint8_t temp;
 
     temp = (1 << 6) | (1 << 4); // enable, master
@@ -22,13 +22,13 @@ char hcs12_spi_init(const struct hcs12_spi_platform *__FAR platform, uint8_t fla
     return 1;
 }
 
-char hcs12_spi_select(const struct hcs12_spi_platform *__FAR platform, uint8_t which, uint8_t is_select) {
+uint8_t hcs12_spi_select(const struct hcs12_spi_platform *__FAR platform, uint8_t which, uint8_t is_select) {
     if (which >= platform->cs_num) return 0;
     hcs12_gpio_set_output(&platform->cs_pins[which], 0 == is_select);
     return 1;
 }
 
-char hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint8_t *dat) {
+uint8_t hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint8_t *dat) {
     uint16_t i;
     for (;;) { // wait transmit emtpy
         if (platform->regs->sr.Bits.SPTEF) break;
