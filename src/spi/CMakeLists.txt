@@ -1,19 +1,6 @@
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/
+set(SOURCES
+    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/spi.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/softspi.c
+    PARENT_SCOPE
 )
-
-set(
-    SPI_SOURCE
-    spi.c
-    softspi.c
-)
-
-add_library(
-    spi
-    ${SPI_SOURCE}
-)
-
-if(COMMAND add_pc_lint)
-    add_pc_lint(spi ${SPI_SOURCE})
-endif(COMMAND add_pc_lint)
-

@@ -1,12 +1,13 @@
-add_library(
-    drivers
-    ads1015/ads1015.c
-    ads8317/ads8317.c
-    ad5259/ad5259.c
-    ad5259/ad5259_test.c
-    dac816x/dac816x.c
-    hcf4052/hcf4052.c
-    hcf4052/hcf4052_test.c
-    sd2405al/sd2405al.c
+set(SOURCES
+    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/sd2405al/sd2405al.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/hcf4052/hcf4052.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/hcf4052/hcf4052_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/dac816x/dac816x.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ad5259/ad5259.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ad5259/ad5259_test.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ads8317/ads8317.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/ads1015/ads1015.c
+    PARENT_SCOPE
 )
 

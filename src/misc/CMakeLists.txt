@@ -1,18 +1,12 @@
-include_directories(
-    ${CMAKE_CURRENT_SOURCE_DIR}/
+set(SOURCES
+    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/second_datetime.c
+    PARENT_SCOPE
 )
 
-set(
-    MISC_SOURCE
-    second_datetime.c
+set(TEST_SOURCES
+    ${TEST_SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/second_datetime_test.c
+    PARENT_SCOPE
 )
-
-add_library(
-    misc
-    ${MISC_SOURCE}
-)
-
-if(COMMAND add_pc_lint)
-    add_pc_lint(misc ${MISC_SOURCE})
-endif(COMMAND add_pc_lint)
 

@@ -1,5 +1,6 @@
 set(SOURCES
     ${SOURCES}
-    ${CMAKE_CURRENT_SOURCE_DIR}/gpio.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/shell.c
     PARENT_SCOPE
 )
+
