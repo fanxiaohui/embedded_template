@@ -12,9 +12,8 @@ extern async_mutex_t async_g_lock;
 
 struct async_looper_command {
     unsigned char type;
-    union {
-        async_event_t event;
-    } data;
+    async_event_t event;
+    void *__FAR addition_data;
 };
 
 #define LOOPER_COMMAND_TYPE_CANCEL_EVENT       0
@@ -33,7 +32,7 @@ void async_event_init(void);
 async_time_t async_event_exec_timeout(struct list_head *__FAR events);
 void async_event_free_from_looper_event_list(async_event_t event, struct list_head *__FAR list);
 void async_event_free_all(struct list_head *events);
-async_time_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events);
+async_time_t async_event_exec_trigger(async_event_t event, void *__FAR addition_data, struct list_head *__FAR events);
 async_time_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list);
 
 #endif

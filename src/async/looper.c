@@ -130,11 +130,7 @@ char async_notify_loop(const struct async_looper_command *priv) {
     return async_post_sem(looper->sem);
 }
 
-#if ASYNC_LOOPER_SIZE>1
 char async_looper_exit(async_looper_t looper) {
-#else
-char async_looper_exit() {
-#endif
     struct async_looper_command priv;
 
     priv.type = LOOPER_COMMAND_TYPE_EXIT;
@@ -146,11 +142,7 @@ char async_looper_exit() {
 #endif
 }
 
-#if ASYNC_LOOPER_SIZE>1
 void async_looper_loop(async_looper_t looper) {
-#else
-void async_looper_loop(void) {
-#endif
     async_time_t now;
     async_time_t diff;
     async_time_t next_timestamp;
@@ -188,7 +180,7 @@ void async_looper_loop(void) {
         async_unlock_mutex(looper->lock);
 
         if (cmd.type == LOOPER_COMMAND_TYPE_TRIGGER_CALL) {
-            async_time_t timestamp = async_event_exec_trigger(cmd.data.event, &looper->events);
+            async_time_t timestamp = async_event_exec_trigger(cmd.event, cmd.addition_data, &looper->events);
             if (timestamp < next_timestamp) {
                 next_timestamp = timestamp;
             }
@@ -196,7 +188,7 @@ void async_looper_loop(void) {
         }
 
         if (cmd.type == LOOPER_COMMAND_TYPE_ADD_EVENT) {
-            async_time_t timestamp = async_event_add_to_looper_event_list(cmd.data.event, &looper->events);
+            async_time_t timestamp = async_event_add_to_looper_event_list(cmd.event, &looper->events);
             if (timestamp < next_timestamp) {
                 next_timestamp = timestamp;
             }
@@ -204,7 +196,7 @@ void async_looper_loop(void) {
         }
 
         if (cmd.type == LOOPER_COMMAND_TYPE_CANCEL_EVENT) {
-            async_event_free_from_looper_event_list(cmd.data.event, &looper->events);
+            async_event_free_from_looper_event_list(cmd.event, &looper->events);
             continue;
         }
 

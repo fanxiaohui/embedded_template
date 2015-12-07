@@ -31,11 +31,7 @@ void async_event_init(void) {
     }
 }
 
-#if ASYNC_LOOPER_SIZE>1
 async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_time_t timeout, void *__FAR dat) {
-#else
-async_event_t async_event_register(async_event_callback_t cb, async_time_t timeout, void *__FAR dat) {
-#endif
     async_event_t ret;
     struct async_looper_command priv;
 
@@ -56,7 +52,7 @@ async_event_t async_event_register(async_event_callback_t cb, async_time_t timeo
     ret->timeout = timeout;
 
     priv.type = LOOPER_COMMAND_TYPE_ADD_EVENT;
-    priv.data.event = ret;
+    priv.event = ret;
 
 #if ASYNC_LOOPER_SIZE>1
     if (async_notify_loop(looper, &priv)) { // OK
@@ -89,7 +85,7 @@ async_time_t async_event_exec_timeout(struct list_head *__FAR events) {
             goto __check_timestamp;
         }
 
-        rc = event->cb(event);
+        rc = event->cb(event, ASYNC_EVENT_ADDITION_DATA_TIMEOUT);
         if (rc == 0) {
             async_lock_mutex(async_g_lock);
             list_move(pos, &free_list);
@@ -109,7 +105,7 @@ __check_timestamp:
     return most_recent_time;
 }
 
-async_time_t async_event_exec_trigger(async_event_t event, struct list_head *__FAR events) {
+async_time_t async_event_exec_trigger(async_event_t event, void *__FAR addition_data, struct list_head *__FAR events) {
     char rc;
     struct list_head *__FAR pos;
     struct list_head *__FAR n;
@@ -119,7 +115,7 @@ async_time_t async_event_exec_trigger(async_event_t event, struct list_head *__F
             continue;
         }
 
-        rc = event->cb(event);
+        rc = event->cb(event, addition_data);
         if (rc == 0) {
             async_lock_mutex(async_g_lock);
             list_move(&event->head, &free_list);
@@ -133,11 +129,11 @@ async_time_t async_event_exec_trigger(async_event_t event, struct list_head *__F
     return ASYNC_TIME_FOREVER;
 }
 
-char async_event_trigger(async_event_t event) {
+char async_event_trigger(async_event_t event, void *__FAR addition_data) {
     struct async_looper_command priv;
 
     priv.type = LOOPER_COMMAND_TYPE_TRIGGER_CALL;
-    priv.data.event = event;
+    priv.event = event;
 
 #if ASYNC_LOOPER_SIZE>1
     return async_notify_loop(event->looper, &priv);
@@ -150,7 +146,7 @@ async_time_t async_event_add_to_looper_event_list(async_event_t event, struct li
     char rc = 1;
 
     if (event->timeout == 0) {
-        rc = event->cb(event);
+        rc = event->cb(event, ASYNC_EVENT_ADDITION_DATA_TIMEOUT);
     }
 
     if (rc == 0) {
@@ -209,7 +205,7 @@ char async_event_cancel(async_event_t event) {
     struct async_looper_command priv;
 
     priv.type = LOOPER_COMMAND_TYPE_CANCEL_EVENT;
-    priv.data.event = event;
+    priv.event = event;
 
 #if ASYNC_LOOPER_SIZE>1
     return async_notify_loop(event->looper, &priv);

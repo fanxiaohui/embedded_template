@@ -13,10 +13,13 @@
 typedef struct async_event *__FAR async_event_t;
 
 
+#define ASYNC_EVENT_ADDITION_DATA_TIMEOUT ((void *__FAR)0xffffffff)
+
+
 /// \brief 异步事件执行的函数类型.
 /// return ==0 取消当前异步事件回调.
 /// return !=0 继续等待事件.
-typedef char (*async_event_callback_t)(async_event_t event);
+typedef char (*async_event_callback_t)(async_event_t event, void *__FAR addition_data);
 
 
 #define ASYNC_EVENT_REGISTER_ERROR ((async_event_t)0)
@@ -28,11 +31,8 @@ typedef char (*async_event_callback_t)(async_event_t event);
 /// \param dat 调用回调函数式传入的用户数据指针.
 ///
 /// \return 异步调用数据类型, 这个值用于后面的trigger来触发这个事件的执行.
-#if ASYNC_LOOPER_SIZE>1
 async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_time_t timeout, void *__FAR dat);
-#else
-async_event_t async_event_register(async_event_callback_t cb, async_time_t timeout, void *__FAR dat);
-#endif
+
 
 
 /// \brief async_event_trigger 触发一个异步事件的执行.
@@ -41,7 +41,7 @@ async_event_t async_event_register(async_event_callback_t cb, async_time_t timeo
 ///
 /// \return ==0 触发失败.
 /// \return !=0 触发成功.
-char async_event_trigger(async_event_t event);
+char async_event_trigger(async_event_t event, void *__FAR addition_data);
 
 /// \brief async_event_set_timeout 设置事件的超时时间.
 ///
