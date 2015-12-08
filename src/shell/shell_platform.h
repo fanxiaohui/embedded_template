@@ -1,5 +1,5 @@
-#ifndef __SHELL_PRIVATE_H__
-#define __SHELL_PRIVATE_H__
+#ifndef __SHELL_PLATFORM_H__
+#define __SHELL_PLATFORM_H__
 
 #include "shell.h"
 
@@ -7,12 +7,12 @@
 typedef void(*shell_handler)(int argc, char **argv);
 
 /// 一个shell命令的相关信息.
-typedef struct {
+struct shell_command {
     const char *cmd; ///< shell命令.
     const char *summary; ///< 简要帮助.
     const char *help; ///< 详细帮助
     shell_handler handler; ///< 对应执行的函数.
-} shell_command_t;
+};
 
 /// 用于声明一个shell命令.
 #define SHELL_PROTYPE(cmd)  \

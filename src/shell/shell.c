@@ -1,8 +1,8 @@
-#include "shell_private.h"
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
+#include <stdio.h>
+#include "shell_platform.h"
 
 
 #ifndef SHELL_WELCOM_MESSAGE
@@ -18,21 +18,22 @@
 #define SHELL_ALT_SPACE           '\x07'
 #define SHELL_MAX_ARGS            10
 
-static unsigned char is_exit;
-
-void shellh_not_implemented_handler(int argc, char **argv) {
+static void shellh_not_implemented_handler(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
     printf(SHELL_ERRMSG);
 }
 
-void shellh_show_help(const char *cmd, const char *helptext) {
+static void shellh_show_help(const char *cmd, const char *helptext) {
     printf("Usage: %s %s", cmd, helptext);
 }
 
 static const char shell_summary_exit[] = "exit the shell";
 static const char shell_help_exit[] = "\nExits the shell.\n";
 static void shell_func_exit(int argc, char **argv) {
+    (void)argc;
+    (void)argv;
     printf("byte ...\n");
-    is_exit = 1;
 }
 
 static const char shell_summary_help[] = "shell help";
@@ -43,19 +44,19 @@ static void shell_func_help(int argc, char **argv);
 
 
 /// shell命令列表的结束标记.
-#define SHELL_COMMAND_END() {0, 0, 0, 0}
+#define SHELL_COMMAND_END() {(const char *__FAR)0, (const char *__FAR)0, (const char *__FAR)0, (const char *__FAR)0}
 
-static const shell_command_t buildin_shell_commands[] = {
+static const struct shell_command buildin_shell_commands[] = {
 #ifdef SHELL_COMMAND_CUSTOM_LIST
-    SHELL_COMMAND_CUSTOM_LIST,
+    SHELL_COMMAND_CUSTOM_LIST
 #endif
     SHELL_COMMAND("help", help),
     SHELL_COMMAND("exit", exit),
     SHELL_COMMAND_END(),
 };
 
-static void shell_list_summary_help(const shell_command_t *cmds) {
-    const shell_command_t *pcmd;
+static void shell_list_summary_help(const struct shell_command *cmds) {
+    const struct shell_command *__FAR pcmd;
     for (pcmd = cmds; pcmd->cmd != NULL; ++pcmd) {
         if (strlen(pcmd->summary) > 0) {
             printf("  %-6s - %s\n", pcmd->cmd, pcmd->summary);
@@ -63,11 +64,11 @@ static void shell_list_summary_help(const shell_command_t *cmds) {
     }
 }
 
-static const shell_command_t *shell_detail_help(const shell_command_t *cmds, const char *cmd) {
-    const shell_command_t *pcmd;
+static const struct shell_command *shell_detail_help(const struct shell_command *cmds, const char *cmd) {
+    const struct shell_command *pcmd;
     for (pcmd = cmds; pcmd->cmd != NULL; ++pcmd) {
         if (!strcmp(pcmd->cmd, cmd) && strlen(pcmd->summary) > 0) {
-            printf("%s - %s\nUsage: %s %s",
+            printf("%s - %s\nUsage:\n %s %s\n\n",
                    pcmd->cmd,
                    pcmd->summary,
                    pcmd->cmd,
@@ -99,10 +100,10 @@ static void shell_func_help(int argc, char **argv) {
     printf("For more information use 'help <command>'.\n");
 }
 
-static const shell_command_t *shell_execute_command_in_commands(const shell_command_t *cmds, int argc, char **argv) {
-    const shell_command_t *pcmd;
+static const struct shell_command *shell_execute_command_in_commands(const struct shell_command *cmds, int argc, char **argv) {
+    const struct shell_command *pcmd;
     for (pcmd = cmds; pcmd->cmd != NULL; ++pcmd) {
-        if (!strcasecmp(pcmd->cmd, argv[ 0 ])) {
+        if (!strcmp(pcmd->cmd, argv[0])) {
             pcmd->handler(argc, argv);
             return pcmd;
         }
@@ -225,49 +226,48 @@ void shell_execute_command(char *cmd) {
     printf("Command \"%s\" cannot be found.\n", argv[0]);
 }
 
-/*
-void getline(char *buf, int buf_size) {
-    int i;
+
+static void getline(char *buf, int buf_size) {
+    signed int i;
     int c;
-    for (i = 0; i < buf_size - 1; ++i) {
-        c = fgetc(stdin);
-        if (c == '\b') {
+    for (i = 0; i < buf_size - 1;) {
+        c = getchar();
+        if (c == '\b' || c == 0x7F) {
             if (i > 0) {
                 --i;
-                fputc('\b', stdout);
-                fputc(' ', stdout);
-                fputc('\b', stdout);
+                --buf;
+                putchar('\b');
+                putchar(' ');
+                putchar('\b');
             }
             continue;
         }
 
         if (c == '\r') {
-            fputc('\n', stdout);
+            putchar('\n');
             *buf = 0;
             return;
         }
 
-        fputc(c, stdout);
-        *buf++ = c;
+        putchar(c);
+        *buf++ = (char)c;
+        ++i;
     }
 
     *buf = 0;
 }
-*/
 
-extern void shell_getline(char *buf, int buf_size);
-
-void shell_loop(shell_get_line get_line, void *priv_data) {
+void shell_loop(void) {
     char cmd[SHELL_MAXSIZE];
-    is_exit = 0;
+
 
     printf("\n");
     printf(SHELL_WELCOM_MESSAGE);
     printf("\n");
 
-    while (!is_exit) {
+    while (1) {
         printf(SHELL_PROMPT);
-        get_line(cmd, sizeof(cmd), priv_data);
+        getline(cmd, sizeof(cmd));
         if (strlen(cmd) == 0) {
             continue;
         }
