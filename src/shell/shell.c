@@ -18,6 +18,9 @@
 #define SHELL_ALT_SPACE           '\x07'
 #define SHELL_MAX_ARGS            10
 
+
+static int rc = 0;
+
 static void shellh_not_implemented_handler(int argc, char **argv) {
     (void)argc;
     (void)argv;
@@ -30,17 +33,18 @@ static void shellh_show_help(const char *cmd, const char *helptext) {
 
 static const char shell_summary_exit[] = "exit the shell";
 static const char shell_help_exit[] = "\nExits the shell.\n";
-static void shell_func_exit(int argc, char **argv) {
+static int shell_func_exit(int argc, char **argv) {
     (void)argc;
     (void)argv;
     printf("byte ...\n");
+    return 0;
 }
 
 static const char shell_summary_help[] = "shell help";
 static const char shell_help_help[] = "[<command>]\n"
                                       "    [<command>] - the command to get help on.\n"
                                       "Without arguments it shows a summary of all the shell commands.\n";
-static void shell_func_help(int argc, char **argv);
+static int shell_func_help(int argc, char **argv);
 
 
 /// shell命令列表的结束标记.
@@ -80,31 +84,32 @@ static const struct shell_command *shell_detail_help(const struct shell_command 
 }
 
 
-static void shell_func_help(int argc, char **argv) {
+static int shell_func_help(int argc, char **argv) {
     if (argc > 2) {
         shellh_show_help(argv[0], shell_help_help);
-        return;
+        return -1;
     }
 
     if (argc == 1) {
         printf("Shell commands:\n");
         shell_list_summary_help(buildin_shell_commands);
-        return;
+        return 0;
     }
 
     if (NULL != shell_detail_help(buildin_shell_commands, argv[1])) {
-        return;
+        return 0;
     }
 
     printf("Unknown command '%s'.\n", argv[ 1 ]);
     printf("For more information use 'help <command>'.\n");
+    return -2;
 }
 
 static const struct shell_command *shell_execute_command_in_commands(const struct shell_command *cmds, int argc, char **argv) {
     const struct shell_command *pcmd;
     for (pcmd = cmds; pcmd->cmd != NULL; ++pcmd) {
         if (!strcmp(pcmd->cmd, argv[0])) {
-            pcmd->handler(argc, argv);
+            rc = pcmd->handler(argc, argv);
             return pcmd;
         }
     }
@@ -236,20 +241,20 @@ static void getline(char *buf, int buf_size) {
             if (i > 0) {
                 --i;
                 --buf;
-                putchar('\b');
-                putchar(' ');
-                putchar('\b');
+                //putchar('\b');
+                //putchar(' ');
+                //putchar('\b');
             }
             continue;
         }
 
         if (c == '\r') {
-            putchar('\n');
+            //putchar('\n');
             *buf = 0;
             return;
         }
 
-        putchar(c);
+        //putchar(c);
         *buf++ = (char)c;
         ++i;
     }
@@ -266,7 +271,7 @@ void shell_loop(void) {
     printf("\n");
 
     while (1) {
-        printf(SHELL_PROMPT);
+        printf("[%d]" SHELL_PROMPT, rc);
         getline(cmd, sizeof(cmd));
         if (strlen(cmd) == 0) {
             continue;

@@ -4,7 +4,7 @@
 #include "shell.h"
 
 /// shell对应的执行函数.
-typedef void(*shell_handler)(int argc, char **argv);
+typedef int(*shell_handler)(int argc, char **argv);
 
 /// 一个shell命令的相关信息.
 struct shell_command {
@@ -16,7 +16,7 @@ struct shell_command {
 
 /// 用于声明一个shell命令.
 #define SHELL_PROTYPE(cmd)  \
-    extern void shell_func_##cmd(int argc, char **argv); \
+    extern int shell_func_##cmd(int argc, char **argv); \
     extern const char shell_help_##cmd[]; \
     extern const char shell_summary_##cmd[]
 
