@@ -5,11 +5,11 @@ uint8_t hcs12_spi_init(const struct hcs12_spi_platform *__FAR platform, uint8_t 
 
     temp = (1 << 6) | (1 << 4); // enable, master
     if (flags & SPI_FLAG_CLK_IDLE_HIGH) temp |= 1 << 3;
-    if (flags & SPI_FLAG_CLK_FIRST_EDGE) temp |= 1 << 2;
+    if ((flags & SPI_FLAG_CLK_FIRST_EDGE) == 0) temp |= 1 << 2;
     if (flags & SPI_FLAG_LSB_FIRST) temp |= 1 << 0;
     platform->regs->cr1.Byte = temp;
 
-    temp = (1 << 6) | (1 << 1); //8bit, stop in wait mode
+    temp = (1 << 1); //8bit, stop in wait mode
     platform->regs->cr2.Byte = temp;
     platform->regs->br.Byte = platform->baud_reg_value;
 

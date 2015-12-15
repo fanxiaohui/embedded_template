@@ -21,7 +21,7 @@ inline uint8_t spi_is_clk_edge_first(spi_bus_t bus);
 inline uint8_t spi_config_first_bit(spi_bus_t bus, uint8_t is_lsb_first);
 inline uint8_t spi_is_lsb_first(spi_bus_t bus);
 inline uint8_t spi_select(spi_bus_t bus, uint8_t which, uint8_t is_select);
-inline uint8_t spi_transmit(spi_bus_t bus, uint8_t *b);
+inline uint8_t spi_transmit(spi_bus_t bus, uint8_t *__FAR b);
 
 #endif
 

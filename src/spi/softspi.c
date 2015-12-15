@@ -89,7 +89,7 @@ inline static uint8_t __transmit_1st_edge_msb_first(struct softspi_platform cons
     for (b = 0x80u; b != 0u; b = b >> 1) {
         gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
         gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
-        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+        if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
         gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
@@ -109,7 +109,7 @@ inline static uint8_t __transmit_2st_edge_msb_first(struct softspi_platform cons
         gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
         gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
         gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
-        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+        if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
     }
@@ -127,7 +127,7 @@ inline static uint8_t __transmit_1st_edge_lsb_first(struct softspi_platform cons
     for (b = 0x01; b != 0; b = b << 1) {
         gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
         gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
-        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+        if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
         gpio_set_output(gpio_ops, plat->clk, clk_idle_high);
@@ -147,7 +147,7 @@ inline static uint8_t __transmit_2st_edge_lsb_first(struct softspi_platform cons
         gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
         gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
         gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
-        if (gpio_input_is_high(gpio_ops, plat->mosi)) {
+        if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
     }

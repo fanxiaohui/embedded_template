@@ -22,5 +22,6 @@ inline const char *gpio_mode_to_string(enum gpio_mode moe);
 inline uint8_t gpio_input_is_high(gpio_ops_t ops, gpio_t io);
 inline uint8_t gpio_output_is_high(gpio_ops_t ops, gpio_t io);
 inline uint8_t gpio_set_output(gpio_ops_t ops, gpio_t io, uint8_t is_high);
+void gpio_dump(struct gpio_operations const *__FAR ops, void *__FAR io, const char *prefix);
 
 #endif

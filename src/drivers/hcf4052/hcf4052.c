@@ -13,19 +13,19 @@ void hcf4052_select_channel(const struct hcf4052_platform *__FAR platform, enum 
 
     // switch channel
     switch (channel) {
-    case HCS4052_CHANNEL_0:
+    case HCF4052_CHANNEL_0:
         gpio_set_output(platform->gpio_ops, platform->ctrl_a, 0);
         gpio_set_output(platform->gpio_ops, platform->ctrl_b, 0);
         break;
-    case HCS4052_CHANNEL_1:
+    case HCF4052_CHANNEL_1:
         gpio_set_output(platform->gpio_ops, platform->ctrl_a, 1);
         gpio_set_output(platform->gpio_ops, platform->ctrl_b, 0);
         break;
-    case HCS4052_CHANNEL_2:
+    case HCF4052_CHANNEL_2:
         gpio_set_output(platform->gpio_ops, platform->ctrl_a, 0);
         gpio_set_output(platform->gpio_ops, platform->ctrl_b, 1);
         break;
-    case HCS4052_CHANNEL_3:
+    case HCF4052_CHANNEL_3:
         gpio_set_output(platform->gpio_ops, platform->ctrl_a, 1);
         gpio_set_output(platform->gpio_ops, platform->ctrl_b, 1);
         break;
@@ -35,5 +35,28 @@ void hcf4052_select_channel(const struct hcf4052_platform *__FAR platform, enum 
 
     // enable
     gpio_set_output(platform->gpio_ops, platform->ctrl_inh, 0);
+}
+
+
+enum hcf4052_channel hcf4052_get_current_channel(const struct hcf4052_platform *__FAR platform) {
+    uint8_t bits = 0;
+    static const uint8_t io_to_channel[] = {
+        HCF4052_CHANNEL_0,
+        HCF4052_CHANNEL_2,
+        HCF4052_CHANNEL_1,
+        HCF4052_CHANNEL_3,
+    };
+    if (gpio_output_is_high(platform->gpio_ops, platform->ctrl_inh)) {
+        return HCF4052_CHANNEL_NONE;
+    }
+
+    if (gpio_output_is_high(platform->gpio_ops, platform->ctrl_a)) {
+        bits |= 0x01;
+    }
+    if (gpio_output_is_high(platform->gpio_ops, platform->ctrl_a)) {
+        bits |= 0x02;
+    }
+
+    return io_to_channel[bits];
 }
 

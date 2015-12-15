@@ -11,7 +11,7 @@ typedef uint8_t (*spi_is_clk_first_edge_func)(void *__FAR private_data);
 typedef uint8_t (*spi_config_first_bit_func)(void *__FAR private_data, uint8_t is_lsb_first);
 typedef uint8_t (*spi_is_lsb_first_func)(void *__FAR private_data);
 typedef uint8_t (*spi_select_func)(void *__FAR private_data, uint8_t which, uint8_t is_select);
-typedef uint8_t (*spi_transmit_func)(void *__FAR private_data, uint8_t *b);
+typedef uint8_t (*spi_transmit_func)(void *__FAR private_data, uint8_t *__FAR b);
 
 struct spi_operations {
     spi_init_func init;
