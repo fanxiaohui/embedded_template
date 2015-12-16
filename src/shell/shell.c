@@ -66,6 +66,8 @@ static void shell_list_summary_help(const struct shell_command *cmds) {
             printf("  %-6s - %s\n", pcmd->cmd, pcmd->summary);
         }
     }
+
+    printf("\nhelp <command> for more information of the command.\n\n");
 }
 
 static const struct shell_command *shell_detail_help(const struct shell_command *cmds, const char *cmd) {
