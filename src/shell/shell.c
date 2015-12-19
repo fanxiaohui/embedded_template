@@ -274,7 +274,7 @@ void shell_loop(void) {
 
     while (1) {
         printf("[%d]" SHELL_PROMPT, rc);
-        getline(cmd, sizeof(cmd));
+        getline(cmd, sizeof(cmd)-1);
         if (strlen(cmd) == 0) {
             continue;
         }
