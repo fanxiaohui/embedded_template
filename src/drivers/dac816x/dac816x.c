@@ -66,8 +66,8 @@ static void set_gain(struct dac816x *__FAR dev) {
 char dac816x_init(struct dac816x *__FAR dev) {
     spi_init(&dev->platform->bus, SPI_FLAG_CLK_IDLE_HIGH | SPI_FLAG_CLK_FIRST_EDGE);
 
-    dev->channel_a_power_status = dev->platform->init_channel_a_power_status;
-    dev->channel_b_power_status = dev->platform->init_channel_b_power_status;
+    dev->channel_a_power_status = DAC816X_CHANNEL_POWER_DOWN_100K;
+    dev->channel_b_power_status = DAC816X_CHANNEL_POWER_DOWN_100K;
     dev->is_channel_a_gain_2 = 0;
     dev->is_channel_b_gain_2 = 0;
 
