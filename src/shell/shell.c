@@ -21,11 +21,11 @@
 
 static int rc = 0;
 
-static void shellh_not_implemented_handler(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-    printf(SHELL_ERRMSG);
-}
+//static void shellh_not_implemented_handler(int argc, char **argv) {
+//    (void)argc;
+//   (void)argv;
+//    printf(SHELL_ERRMSG);
+//}
 
 static void shellh_show_help(const char *cmd, const char *helptext) {
     printf("Usage: %s %s", cmd, helptext);
@@ -48,7 +48,7 @@ static int shell_func_help(int argc, char **argv);
 
 
 /// shell命令列表的结束标记.
-#define SHELL_COMMAND_END() {(const char *__FAR)0, (const char *__FAR)0, (const char *__FAR)0, (const char *__FAR)0}
+#define SHELL_COMMAND_END() {(const char *)0, (const char *)0, (const char *)0, (shell_handler)0}
 
 static const struct shell_command buildin_shell_commands[] = {
 #ifdef SHELL_COMMAND_CUSTOM_LIST

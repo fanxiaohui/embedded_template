@@ -49,10 +49,10 @@ uint8_t hcs12_gpio_set_output(const struct hcs12_gpio *__FAR io, uint8_t is_high
 }
 
 const struct gpio_operations hcs12_gpio_ops = {
-    hcs12_gpio_init,
-    hcs12_gpio_get_mode,
-    hcs12_gpio_input_is_high,
-    hcs12_gpio_output_is_high,
-    hcs12_gpio_set_output,
+    (uint8_t (*)(void *, enum gpio_mode))hcs12_gpio_init,
+    (enum gpio_mode (*)(void *))hcs12_gpio_get_mode,
+    (uint8_t (*)(void *))hcs12_gpio_input_is_high,
+    (uint8_t (*)(void *))hcs12_gpio_output_is_high,
+    (uint8_t (*)(void *, uint8_t))hcs12_gpio_set_output,
 };
 

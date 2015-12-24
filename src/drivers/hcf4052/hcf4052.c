@@ -40,7 +40,7 @@ void hcf4052_select_channel(const struct hcf4052_platform *__FAR platform, enum 
 
 enum hcf4052_channel hcf4052_get_current_channel(const struct hcf4052_platform *__FAR platform) {
     uint8_t bits = 0;
-    static const uint8_t io_to_channel[] = {
+    static const enum hcf4052_channel io_to_channel[] = {
         HCF4052_CHANNEL_0,
         HCF4052_CHANNEL_2,
         HCF4052_CHANNEL_1,
