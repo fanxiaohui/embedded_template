@@ -31,7 +31,7 @@ char async_notify_loop(const struct async_looper_command *cmd);
 void async_event_init(void);
 async_time_t async_event_exec_timeout(struct list_head *__FAR events);
 void async_event_free_from_looper_event_list(async_event_t event, struct list_head *__FAR list);
-void async_event_free_all(struct list_head *events);
+void async_event_free_all(struct list_head *__FAR events);
 async_time_t async_event_exec_trigger(async_event_t event, void *__FAR addition_data, struct list_head *__FAR events);
 async_time_t async_event_add_to_looper_event_list(async_event_t event, struct list_head *__FAR list);
 

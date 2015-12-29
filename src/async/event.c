@@ -31,7 +31,11 @@ void async_event_init(void) {
     }
 }
 
+#if ASYNC_LOOPER_SIZE>1
 async_event_t async_event_register(async_looper_t looper, async_event_callback_t cb, async_time_t timeout, void *__FAR dat) {
+#else
+async_event_t async_event_register(async_event_callback_t cb, async_time_t timeout, void *__FAR dat) {
+#endif
     async_event_t ret;
     struct async_looper_command priv;
 
@@ -174,7 +178,7 @@ void async_event_free_from_looper_event_list(async_event_t event, struct list_he
     }
 }
 
-void async_event_free_all(struct list_head *events) {
+void async_event_free_all(struct list_head *__FAR events) {
     async_lock_mutex(async_g_lock);
     list_splice_init(events, &free_list);
     async_unlock_mutex(async_g_lock);

@@ -6,8 +6,8 @@
 
 #include "./private.h"
 #include <stdio.h>
-#include <misc/list.h>
-#include <ringbuffer/ringbuffer.h>
+#include "misc/list.h"
+#include "ringbuffer/ringbuffer.h"
 
 struct async_looper {
 #if ASYNC_LOOPER_SIZE>1

@@ -16,7 +16,7 @@ struct softspi_platform {
 };
 
 struct softspi {
-    unsigned char flags;
+    uint8_t flags;
     const struct softspi_platform *__FAR platform;
 };
 

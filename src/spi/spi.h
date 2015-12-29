@@ -10,8 +10,11 @@
 typedef const struct spi_bus *__FAR spi_bus_t;
 
 #define SPI_FLAG_CLK_IDLE_HIGH     0x01u
+#define SPI_FLAG_CLK_IDLE_LOW      0x00u
 #define SPI_FLAG_CLK_FIRST_EDGE    0x02u
+#define SPI_FLAG_CLK_SECOND_EDGE   0x00u
 #define SPI_FLAG_LSB_FIRST         0x04u
+#define SPI_FLAG_MSB_FIRST         0x00u
 
 inline uint8_t spi_init(spi_bus_t bus, uint8_t flags);
 inline uint8_t spi_config_clk_idle(spi_bus_t bus, uint8_t is_low);
