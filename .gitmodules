@@ -4,6 +4,3 @@
 [submodule "Unity"]
 	path = Unity
 	url = https://github.com/ThrowTheSwitch/Unity.git
-[submodule "elua"]
-	path = elua
-	url = https://github.com/elua/elua.git
