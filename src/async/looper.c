@@ -9,12 +9,17 @@
 #include "misc/list.h"
 #include "ringbuffer/ringbuffer.h"
 
+
+#ifndef ASYNC_LOOPER_SIZE
+#define ASYNC_LOOPER_SIZE 1
+#endif
+
 struct async_looper {
 #if ASYNC_LOOPER_SIZE>1
     struct list_head head;
 #endif
-    async_sem_t sem;
-    async_mutex_t lock;
+    os_sem_t sem;
+    os_mutex_t lock;
     struct ringbuffer rb;
     unsigned char buf[100];
     struct list_head events;
@@ -44,15 +49,15 @@ void async_looper_init(void) {
 async_looper_t async_looper_create(void) {
 #if ASYNC_LOOPER_SIZE>1
     async_looper_t ret;
-    async_lock_mutex(async_g_lock);
+    os_lock_mutex(async_g_lock);
     if (list_empty(&free_list)) {
-        async_unlock_mutex(async_g_lock);
+        os_unlock_mutex(async_g_lock);
         return ASYNC_LOOPER_CREATE_ERROR;
     }
 
     ret = (async_looper_t)(free_list.next);
     list_del(&(ret->head));
-    async_unlock_mutex(async_g_lock);
+    os_unlock_mutex(async_g_lock);
 
     ret->lock = async_create_mutex();
     ret->sem = async_create_sem();
@@ -64,24 +69,24 @@ async_looper_t async_looper_create(void) {
         goto __error;
     }
 
-    async_lock_mutex(async_g_lock);
+    os_lock_mutex(async_g_lock);
     list_add(&(ret->head), &used_list);
-    async_unlock_mutex(async_g_lock);
+    os_unlock_mutex(async_g_lock);
     return ret;
 
 __error:
     if (ret->lock) {
-        async_destroy_mutex(ret->lock);
+        os_destroy_mutex(ret->lock);
         ret->lock = NULL;
     }
 
     if (ret->sem) {
-        async_destroy_sem(ret->sem);
+        os_destroy_sem(ret->sem);
         ret->sem = NULL;
     }
-    async_lock_mutex(async_g_lock);
+    os_lock_mutex(async_g_lock);
     list_add(&(ret->head), &free_list);
-    async_unlock_mutex(async_g_lock);
+    os_unlock_mutex(async_g_lock);
     return NULL;
 
 #else
@@ -89,11 +94,11 @@ __error:
         return NULL;
     }
 
-    looper->lock = async_create_mutex();
+    looper->lock = os_create_mutex();
     if (looper->lock == NULL) {
         goto __error;
     }
-    looper->sem = async_create_sem();
+    looper->sem = os_create_sem();
     if (looper->sem == NULL) {
         goto __error;
     }
@@ -101,11 +106,11 @@ __error:
 
 __error:
     if (looper->lock != NULL) {
-        async_destroy_mutex(looper->lock);
+        os_destroy_mutex(looper->lock);
         looper->lock = NULL;
     }
     if (looper->sem != NULL) {
-        async_destroy_sem(looper->sem);
+        os_destroy_sem(looper->sem);
         looper->sem = NULL;
     }
     return NULL;
@@ -119,15 +124,15 @@ char async_notify_loop(const struct async_looper_command *priv) {
 #endif
     RINGBUFFER_SIZE_TYPE ret;
 
-    async_lock_mutex(looper->lock);
+    os_lock_mutex(looper->lock);
     ret = ringbuffer_write(&(looper->rb), (unsigned char *__FAR)priv, sizeof(*priv));
-    async_unlock_mutex(looper->lock);
+    os_unlock_mutex(looper->lock);
 
     if (ret != sizeof(*priv)) {
         return 0;
     }
 
-    return async_post_sem(looper->sem);
+    return os_post_sem(looper->sem);
 }
 
 char async_looper_exit(async_looper_t looper) {
@@ -143,19 +148,19 @@ char async_looper_exit(async_looper_t looper) {
 }
 
 void async_looper_loop(async_looper_t looper) {
-    async_time_t now;
-    async_time_t diff;
-    async_time_t next_timestamp;
+    os_time_t now;
+    os_time_t diff;
+    os_time_t next_timestamp;
 
     struct async_looper_command cmd;
 
-    next_timestamp = ASYNC_TIME_FOREVER;
+    next_timestamp = OS_TIME_FOREVER;
 
     while (1) {
-        now = async_get_time();
+        now = os_get_time();
         if (next_timestamp <= now) {
             next_timestamp = async_event_exec_timeout(&looper->events);
-            now = async_get_time();
+            now = os_get_time();
         }
 
         if (next_timestamp <= now) {
@@ -164,23 +169,23 @@ void async_looper_loop(async_looper_t looper) {
             diff = next_timestamp - now;
         }
 
-        if (0 == async_pend_sem(looper->sem, diff)) {
+        if (0 == os_pend_sem(looper->sem, diff)) {
             continue;
         }
 
         // µÈ´ý³¬Ê±.
 
-        async_lock_mutex(looper->lock);
+        os_lock_mutex(looper->lock);
         if (sizeof(cmd) != ringbuffer_read(&(looper->rb), (unsigned char *__FAR)&cmd, sizeof(cmd))) {
             ringbuffer_clear(&(looper->rb));
-            async_clear_sem(looper->sem);
-            async_unlock_mutex(looper->lock);
+            os_clear_sem(looper->sem);
+            os_unlock_mutex(looper->lock);
             continue;
         }
-        async_unlock_mutex(looper->lock);
+        os_unlock_mutex(looper->lock);
 
         if (cmd.type == LOOPER_COMMAND_TYPE_TRIGGER_CALL) {
-            async_time_t timestamp = async_event_exec_trigger(cmd.event, cmd.addition_data, &looper->events);
+            os_time_t timestamp = async_event_exec_trigger(cmd.event, cmd.addition_data, &looper->events);
             if (timestamp < next_timestamp) {
                 next_timestamp = timestamp;
             }
@@ -188,7 +193,7 @@ void async_looper_loop(async_looper_t looper) {
         }
 
         if (cmd.type == LOOPER_COMMAND_TYPE_ADD_EVENT) {
-            async_time_t timestamp = async_event_add_to_looper_event_list(cmd.event, &looper->events);
+            os_time_t timestamp = async_event_add_to_looper_event_list(cmd.event, &looper->events);
             if (timestamp < next_timestamp) {
                 next_timestamp = timestamp;
             }
@@ -202,15 +207,15 @@ void async_looper_loop(async_looper_t looper) {
 
         if (cmd.type == LOOPER_COMMAND_TYPE_EXIT) {
             async_event_free_all(&looper->events);
-            async_destroy_mutex(looper->lock);
+            os_destroy_mutex(looper->lock);
             looper->lock = NULL;
-            async_destroy_sem(looper->sem);
+            os_destroy_sem(looper->sem);
             looper->sem = NULL;
 
 #if ASYNC_LOOPER_SIZE>1
-            async_lock_mutex(async_g_lock);
+            os_lock_mutex(async_g_lock);
             list_move(&looper->head, &free_list);
-            async_unlock_mutex(async_g_lock);
+            os_unlock_mutex(async_g_lock);
 #endif
             return;
         }

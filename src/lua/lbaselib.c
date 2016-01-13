@@ -482,12 +482,13 @@ const LUA_REG_TYPE base_funcs_list[] = {
 
 
 static int luaB_index(lua_State *L) {
+    const char *keyname;
 #if LUA_OPTIMIZE_MEMORY == 2
     int fres;
     if ((fres = luaR_findfunction(L, base_funcs_list)) != 0)
         return fres;
 #endif
-    const char *keyname = luaL_checkstring(L, 2);
+    keyname = luaL_checkstring(L, 2);
     if (!strcmp(keyname, "_VERSION")) {
         lua_pushliteral(L, LUA_VERSION);
         return 1;

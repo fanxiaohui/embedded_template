@@ -77,8 +77,8 @@ typedef union {
 } Value;
 #else // #if defined( LUA_PACK_VALUE ) && defined( ELUA_ENDIAN_BIG )
 typedef union {
-    GCObject *gc;
     void *p;
+    GCObject *gc;
     lua_Number n;
     int b;
 } Value;

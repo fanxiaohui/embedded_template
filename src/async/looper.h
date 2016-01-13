@@ -10,6 +10,10 @@
 #include "./platform.h"
 
 
+#ifndef ASYNC_LOOPER_SIZE
+#define ASYNC_LOOPER_SIZE 1
+#endif
+
 /// 异步循环的数据类型.
 typedef struct async_looper *__FAR async_looper_t;
 
