@@ -9,7 +9,7 @@ typedef OS_EVENT *os_queue_t;
 typedef OS_EVENT *os_mutex_t;
 typedef uint32_t os_time_t;
 
-#define OS_TIME_FOREVER ((os_time_t)0)
+#define OS_TIME_FOREVER ((os_time_t)0xFFFFFFFF)
 
 /// \brief os_assert_info ¶ÏÑÔÊä³ö.
 ///

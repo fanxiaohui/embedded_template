@@ -170,10 +170,10 @@ void async_looper_loop(async_looper_t looper) {
         }
 
         if (0 == os_pend_sem(looper->sem, diff)) {
+            // 等待超时.
             continue;
         }
 
-        // 等待超时.
 
         os_lock_mutex(looper->lock);
         if (sizeof(cmd) != ringbuffer_read(&(looper->rb), (unsigned char *__FAR)&cmd, sizeof(cmd))) {

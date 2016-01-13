@@ -10,17 +10,10 @@
 
 /* Macros one can use to define rotable entries */
 #ifndef LUA_PACK_VALUE
-#ifdef __HC12__
-#define LRO_FUNCVAL(v)  {{(void *)v}, LUA_TLIGHTFUNCTION}
-#define LRO_NUMVAL(v)   {{(void *)v}, LUA_TNUMBER}
-#define LRO_ROVAL(v)    {{(void *)v}, LUA_TROTABLE}
-#define LRO_NILVAL      {{(void *)NULL}, LUA_TNIL}
-#else
 #define LRO_FUNCVAL(v)  {{.p = v}, LUA_TLIGHTFUNCTION}
 #define LRO_NUMVAL(v)   {{.n = v}, LUA_TNUMBER}
 #define LRO_ROVAL(v)    {{.p = (void*)v}, LUA_TROTABLE}
 #define LRO_NILVAL      {{.p = NULL}, LUA_TNIL}
-#endif
 #else // #ifndef LUA_PACK_VALUE
 #define LRO_NUMVAL(v)   {.value.n = v}
 #ifdef ELUA_ENDIAN_LITTLE
@@ -34,15 +27,9 @@
 #endif // #ifdef ELUA_ENDIAN_LITTLE
 #endif // #ifndef LUA_PACK_VALUE
 
-#ifdef __HC12__
-#define LRO_STRKEY(k)   {LUA_TSTRING, {(const char *)k}}
-#define LRO_NUMKEY(k)   {LUA_TNUMBER, {(const char *)k}}
-#define LRO_NILKEY      {LUA_TNIL, {(const char *)NULL}}
-#else
 #define LRO_STRKEY(k)   {LUA_TSTRING, {.strkey = k}}
 #define LRO_NUMKEY(k)   {LUA_TNUMBER, {.numkey = k}}
 #define LRO_NILKEY      {LUA_TNIL, {.strkey=NULL}}
-#endif
 
 /* Maximum length of a rotable name and of a string key*/
 #define LUA_MAX_ROTABLE_NAME      32
