@@ -27,7 +27,7 @@ struct spi_operations {
 
 struct spi_bus {
     void *__FAR private_data;
-    const struct spi_operations *__FAR ops;
+    const struct spi_operations *ops;
 };
 
 #endif

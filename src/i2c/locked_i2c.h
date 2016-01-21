@@ -1,5 +1,5 @@
-#ifndef __SOFT_I2C_H__
-#define __SOFT_I2C_H__
+#ifndef __LOCKED_I2C_H___
+#define __LOCKED_I2C_H__
 
 #include <stdint.h>
 
@@ -10,15 +10,15 @@
 /// \name  SoftI2C IO模拟软件实现I2C
 /// @{
 
-typedef const struct softi2c_platform *__FAR softi2c_t;
+typedef struct lockedi2c_platform *__FAR lockedi2c_t;
 
 
 /// \brief softi2c_init 初始化.
 ///
 /// \param i2c 对应的IO底层接口.
-uint8_t softi2c_init(softi2c_t i2c);
+uint8_t lockedi2c_init(lockedi2c_t i2c);
 
-void softi2c_deinit(const struct softi2c_platform *__FAR i2c);
+void lockedi2c_deinit(lockedi2c_t i2c);
 
 /// \brief softi2c_write_then_read 先写后读.
 ///
@@ -30,7 +30,7 @@ void softi2c_deinit(const struct softi2c_platform *__FAR i2c);
 /// \param rlen 期望读取的数据长度.
 ///
 /// \return 写入和读取的数据的字节数相加.
-uint8_t softi2c_write_then_read(softi2c_t i2c,
+uint8_t lockedi2c_write_then_read(lockedi2c_t i2c,
                                 unsigned char addr,
                                 const unsigned char *__FAR w,
                                 unsigned char wlen,

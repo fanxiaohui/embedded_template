@@ -4,7 +4,7 @@
 static void transmit(struct dac816x_platform const *__FAR platform, uint8_t cmd, uint16_t dat) {
     uint8_t buf;
 
-    spi_select(&platform->bus, 0, 1);
+    spi_select(&platform->bus, platform->cs_index, 1);
 
     spi_transmit(&platform->bus, &cmd);
     buf = dat >> 8;
@@ -12,7 +12,7 @@ static void transmit(struct dac816x_platform const *__FAR platform, uint8_t cmd,
     buf = (uint8_t)dat;
     spi_transmit(&platform->bus, &buf);
 
-    spi_select(&platform->bus, 0, 0);
+    spi_select(&platform->bus, platform->cs_index, 0);
 }
 
 static char set_channel_power_status(struct dac816x_platform const *__FAR platform, uint8_t channel, uint8_t power_status) {

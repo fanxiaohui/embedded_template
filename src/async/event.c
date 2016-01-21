@@ -201,10 +201,6 @@ void *__FAR async_event_get_data(async_event_t event) {
     return event->dat;
 }
 
-char async_event_is_timeout(async_event_t event) {
-    return event->next_timestamp <= os_get_time();
-}
-
 char async_event_cancel(async_event_t event) {
     struct async_looper_command priv;
 

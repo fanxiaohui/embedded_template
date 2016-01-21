@@ -3,6 +3,7 @@
 
 #include "hcs12_gpio.h"
 #include "gpio/gpio_platform.h"
+#include "derivative.h"
 
 struct hcs12_gpio {
     volatile uint8_t *in_reg;

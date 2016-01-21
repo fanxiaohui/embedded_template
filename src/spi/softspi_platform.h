@@ -11,7 +11,7 @@ struct softspi_platform {
     void *__FAR clk;
     void *__FAR mosi;
     void *__FAR miso;
-    void *__FAR *__FAR cs_pin;
+    void *__FAR *__FAR cs_pins;
     uint8_t cs_num;
 };
 

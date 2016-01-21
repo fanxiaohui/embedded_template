@@ -14,6 +14,8 @@ typedef struct hcs12_i2c *__FAR hcs12_i2c_t;
 /// \param i2c 对应的IO底层接口.
 uint8_t hcs12_i2c_init(hcs12_i2c_t i2c);
 
+void hcs12_i2c_deinit(hcs12_i2c_t i2c);
+
 /// \brief hcs12_i2c_write I2C些数据.
 ///
 /// \param i2c 对应的IO底层接口.

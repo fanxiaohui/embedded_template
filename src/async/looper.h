@@ -7,7 +7,7 @@
 #ifndef __ASYNC_LOOPER_H__
 #define __ASYNC_LOOPER_H__
 
-#include "./platform.h"
+#include "platform.h"
 
 
 #ifndef ASYNC_LOOPER_SIZE

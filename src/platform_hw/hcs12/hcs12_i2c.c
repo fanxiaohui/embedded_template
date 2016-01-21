@@ -17,6 +17,10 @@ uint8_t hcs12_i2c_init(struct hcs12_i2c *__FAR i2c) {
     return 1;
 }
 
+void hcs12_i2c_deinit(hcs12_i2c_t i2c) {
+    (void)i2c;
+}
+
 static void init_regs(const struct hcs12_i2c_platform *plat) {
     // clear status reg
     plat->regs->status.Byte = (1 << 7) | (1 << 4) | (1 << 1);
@@ -306,6 +310,7 @@ __exit:
 
 struct i2c_operations hcs12_i2c_ops = {
     hcs12_i2c_init,
+    hcs12_i2c_deinit,
     hcs12_i2c_write_then_read,
 
 };

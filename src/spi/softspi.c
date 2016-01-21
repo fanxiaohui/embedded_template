@@ -8,8 +8,8 @@ uint8_t softspi_init(struct softspi *__FAR bus, uint8_t flags) {
     bus->flags = flags;
 
     for (i = 0u; i < plat->cs_num; ++i) {
-        gpio_init(gpio_ops, plat->cs_pin[i], GPIO_MODE_OUTPUT_PUSHPULL);
-        gpio_set_output(gpio_ops, plat->cs_pin[i], 1u);
+        gpio_init(gpio_ops, plat->cs_pins[i], GPIO_MODE_OUTPUT_PUSHPULL);
+        gpio_set_output(gpio_ops, plat->cs_pins[i], 1u);
     }
 
     gpio_init(gpio_ops, plat->clk, GPIO_MODE_OUTPUT_PUSHPULL);
@@ -76,7 +76,7 @@ uint8_t softspi_select(struct softspi *__FAR bus, uint8_t which, uint8_t is_sele
         return 0u;
     }
 
-    gpio_set_output(gpio_ops, plat->cs_pin[which], is_select == 0u);
+    gpio_set_output(gpio_ops, plat->cs_pins[which], is_select == 0u);
     return 1u;
 }
 

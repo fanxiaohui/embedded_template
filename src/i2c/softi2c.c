@@ -78,6 +78,10 @@ uint8_t softi2c_init(const struct softi2c_platform *__FAR i2c) {
     return 1;
 }
 
+void softi2c_deinit(const struct softi2c_platform *__FAR i2c) {
+    (void)i2c;
+}
+
 uint8_t softi2c_write(const struct softi2c_platform *__FAR i2c,
                       uint8_t addr,
                       const uint8_t *__FAR dat,
@@ -170,6 +174,7 @@ __ret:
 
 const struct i2c_operations softi2c_ops = {
     (i2c_init_func)softi2c_init,
+    (i2c_deinit_func)softi2c_deinit,
     (i2c_transmit_func)softi2c_write_then_read,
 };
 
