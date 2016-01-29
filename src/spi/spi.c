@@ -32,7 +32,7 @@ inline uint8_t spi_select(const struct spi_bus *__FAR bus, uint8_t which, uint8_
     return bus->ops->select(bus->private_data, which, is_select);
 }
 
-inline uint8_t spi_transmit(const struct spi_bus *__FAR bus, uint8_t *__FAR b) {
+inline uint8_t spi_transmit(const struct spi_bus *__FAR bus, uint8_t *b) {
     return bus->ops->transmit(bus->private_data, b);
 }
 

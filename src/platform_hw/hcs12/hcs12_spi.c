@@ -14,8 +14,8 @@ uint8_t hcs12_spi_init(const struct hcs12_spi_platform *__FAR platform, uint8_t 
     platform->regs->br.Byte = platform->baud_reg_value;
 
     for (temp = 0; temp < platform->cs_num; ++temp) {
-        hcs12_gpio_init(&platform->cs_pins[temp], GPIO_MODE_OUTPUT_PUSHPULL);
-        hcs12_gpio_set_output(&platform->cs_pins[temp], 1);
+        (void)hcs12_gpio_init(&platform->cs_pins[temp], GPIO_MODE_OUTPUT_PUSHPULL);
+        (void)hcs12_gpio_set_output(&platform->cs_pins[temp], 1);
     }
 
 
@@ -24,7 +24,7 @@ uint8_t hcs12_spi_init(const struct hcs12_spi_platform *__FAR platform, uint8_t 
 
 uint8_t hcs12_spi_select(const struct hcs12_spi_platform *__FAR platform, uint8_t which, uint8_t is_select) {
     if (which >= platform->cs_num) return 0;
-    hcs12_gpio_set_output(&platform->cs_pins[which], 0 == is_select);
+    (void)hcs12_gpio_set_output(&platform->cs_pins[which], 0 == is_select);
     return 1;
 }
 
@@ -32,7 +32,7 @@ uint8_t hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint
     uint16_t i;
     for (;;) { // wait transmit emtpy
         if (platform->regs->sr.Bits.SPTEF) break;
-        if (i > 1000) return 0;
+        if (i > 10000) return 0;
         ++i;
     }
 
@@ -42,7 +42,7 @@ uint8_t hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint
 
     for (;;) { // wait data recved
         if (platform->regs->sr.Bits.SPIF) break;
-        if (i > 1000) return 0;
+        if (i > 100000) return 0;
         ++i;
     }
 
@@ -52,12 +52,12 @@ uint8_t hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint
 
 struct spi_operations hcs12_spi_ops = {
     hcs12_spi_init,
-    0, //spi_config_clk_idle_func config_clk_idle;
-    0, //spi_is_clk_idle_high_fucn is_clk_idle_high;
-    0, //spi_config_clk_edge_func config_clk_edge;
-    0, //spi_is_clk_idle_high_fucn is_clk_edge_first;
-    0, //spi_config_first_bit_func config_first_bit;
-    0, //spi_is_lsb_first_func is_lsb_first;
+    (spi_config_clk_idle_func)0, //spi_config_clk_idle_func config_clk_idle;
+    (spi_is_clk_idle_high_fucn)0, //spi_is_clk_idle_high_fucn is_clk_idle_high;
+    (spi_config_clk_edge_func)0, //spi_config_clk_edge_func config_clk_edge;
+    (spi_is_clk_idle_high_fucn)0, //spi_is_clk_idle_high_fucn is_clk_edge_first;
+    (spi_config_first_bit_func)0, //spi_config_first_bit_func config_first_bit;
+    (spi_is_lsb_first_func)0, //spi_is_lsb_first_func is_lsb_first;
     hcs12_spi_select,
     hcs12_spi_transmit,
 };

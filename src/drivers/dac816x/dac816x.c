@@ -4,15 +4,15 @@
 static void transmit(struct dac816x_platform const *__FAR platform, uint8_t cmd, uint16_t dat) {
     uint8_t buf;
 
-    spi_select(&platform->bus, platform->cs_index, 1);
+    (void)spi_select(&platform->bus, platform->cs_index, 1);
 
-    spi_transmit(&platform->bus, &cmd);
+    (void)spi_transmit(&platform->bus, &cmd);
     buf = dat >> 8;
-    spi_transmit(&platform->bus, &buf);
+    (void)spi_transmit(&platform->bus, &buf);
     buf = (uint8_t)dat;
-    spi_transmit(&platform->bus, &buf);
+    (void)spi_transmit(&platform->bus, &buf);
 
-    spi_select(&platform->bus, platform->cs_index, 0);
+    (void)spi_select(&platform->bus, platform->cs_index, 0);
 }
 
 static char set_channel_power_status(struct dac816x_platform const *__FAR platform, uint8_t channel, uint8_t power_status) {
@@ -64,7 +64,7 @@ static void set_gain(struct dac816x *__FAR dev) {
 }
 
 char dac816x_init(struct dac816x *__FAR dev) {
-    spi_init(&dev->platform->bus, SPI_FLAG_CLK_IDLE_HIGH | SPI_FLAG_CLK_FIRST_EDGE);
+    (void)spi_init(&dev->platform->bus, SPI_FLAG_CLK_IDLE_HIGH | SPI_FLAG_CLK_FIRST_EDGE);
 
     dev->channel_a_power_status = DAC816X_CHANNEL_POWER_DOWN_100K;
     dev->channel_b_power_status = DAC816X_CHANNEL_POWER_DOWN_100K;

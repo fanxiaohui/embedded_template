@@ -1,6 +1,6 @@
 #include "mmcsd_spi.h"
 #include "mmcsd_private.h"
-#include "platform_os/platform.h"
+#include "platform_os/platform_os.h"
 
 #include "spi/spi.h"
 

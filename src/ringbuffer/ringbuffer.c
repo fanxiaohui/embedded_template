@@ -6,11 +6,7 @@
 
 #include "ringbuffer.h"
 
-#if RINGBUFFER_CHECK != 0
-#define RINGBUFFER_IS_VALID(rb) ((0 != (rb)) && ((rb)->magic == RINGBUFFER_CHECK_MAGIC))
-#else
 #define RINGBUFFER_IS_VALID(rb) (0 != (rb))
-#endif
 
 void ringbuffer_clear(ringbuffer_t rb) {
     if (!RINGBUFFER_IS_VALID(rb)) {
@@ -23,9 +19,6 @@ void ringbuffer_clear(ringbuffer_t rb) {
 }
 
 void ringbuffer_init(ringbuffer_t rb, unsigned char *__FAR buf, RINGBUFFER_SIZE_TYPE len) {
-#if RINGBUFFER_CHECK
-    rb->magic = RINGBUFFER_CHECK_MAGIC;
-#endif
     rb->buf = buf;
     rb->len = 0;
     rb->in = 0;

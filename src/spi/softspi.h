@@ -17,6 +17,6 @@ uint8_t softspi_is_clk_edge_first(softspi_t bus);
 uint8_t softspi_config_first_bit(softspi_t bus, uint8_t is_lsb_first);
 uint8_t softspi_is_lsb_first(softspi_t bus);
 uint8_t softspi_select(softspi_t bus, uint8_t which, uint8_t is_select);
-uint8_t softspi_transmit(softspi_t bus, uint8_t *__FAR dat);
+uint8_t softspi_transmit(softspi_t bus, uint8_t *dat);
 
 #endif

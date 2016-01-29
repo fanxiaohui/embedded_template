@@ -47,9 +47,9 @@ void gpio_dump(struct gpio_operations const *__FAR ops, void *__FAR io, const ch
         }
 
         if (prefix) {
-            printf("%s:%s:%d\n", prefix, gpio_mode_to_string(mode), v);
+            (void)printf("%s:%s:%d\n", prefix, gpio_mode_to_string(mode), v);
         } else {
-            printf("%s:%d\n", gpio_mode_to_string(mode), v);
+            (void)printf("%s:%d\n", gpio_mode_to_string(mode), v);
         }
     }
 }

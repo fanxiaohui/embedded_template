@@ -8,7 +8,7 @@
 struct dac816x_platform {
     /// SPI总线;
     const struct spi_bus bus;
-    uint16_t cs_index;
+    uint8_t cs_index;
     /// 参考电压, 如果是使用内部参考, 该值应赋值为0;
     uint16_t ref_voltage_mv;
 };

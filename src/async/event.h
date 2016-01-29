@@ -12,7 +12,7 @@
 
 #ifndef ASYNC_EVENT_SIZE
 #define ASYNC_EVENT_SIZE 10
-#endif 
+#endif
 
 /// 异步事件调用数据类型.
 typedef struct async_event *__FAR async_event_t;

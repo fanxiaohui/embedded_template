@@ -7,26 +7,26 @@
 ///
 /// \param i2c 底层接口
 static void  inline __start(const struct softi2c_platform *__FAR i2c) {
-    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
-    gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
-    gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
-    gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
 }
 
 /// \brief __start 在总线上产生I2C总线周期结束信号.
 ///
 /// \param i2c 底层接口
 static void  inline __stop(const struct softi2c_platform *__FAR i2c) {
-    gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
-    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
-    gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
 }
 
 static void inline __restart(const struct softi2c_platform *__FAR i2c) {
-    gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
-    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
-    gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
-    gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->sda, 1);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->sda, 0);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
 }
 
 /// \brief __onebit 向I2C总线产生一个BIT的信号, 并读取这个时钟总线上的数据.
@@ -37,8 +37,8 @@ static void inline __restart(const struct softi2c_platform *__FAR i2c) {
 /// \return !=0 这个时钟周期总线上读取的SDA=1; ==0; 这个时钟周期总线上读取到SDA=0.
 static char inline __onebit(const struct softi2c_platform *__FAR i2c, char bit) {
     uint8_t timeout = 0;
-    gpio_set_output(i2c->gpio_ops, i2c->sda, bit);
-    gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->sda, bit);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->scl, 1);
     for (timeout = 0; timeout < 100; ++timeout) {
         if (!gpio_input_is_high(i2c->gpio_ops, i2c->scl)) {
             break;
@@ -46,7 +46,7 @@ static char inline __onebit(const struct softi2c_platform *__FAR i2c, char bit) 
     }
 
     bit = gpio_input_is_high(i2c->gpio_ops, i2c->sda);
-    gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
+    (void)gpio_set_output(i2c->gpio_ops, i2c->scl, 0);
     return bit;
 }
 
@@ -89,14 +89,14 @@ uint8_t softi2c_write(const struct softi2c_platform *__FAR i2c,
     uint8_t i;
 
     __start(i2c); // start
-    __onebyte(i2c, addr << 1); // addr + Write
+    (void)__onebyte(i2c, addr << 1); // addr + Write
     if (0 != __onebit(i2c, 1)) { // check ACK
         __stop(i2c);
         return 0;
     }
 
     for (i = 0; i < len; ++i) {
-        __onebyte(i2c, *dat++);
+        (void)__onebyte(i2c, *dat++);
         if (0 != __onebit(i2c, 1)) { // check ACK
             break;
         }
@@ -112,7 +112,7 @@ uint8_t softi2c_read(const struct softi2c_platform *__FAR i2c,
     uint8_t i;
 
     __start(i2c); // start
-    __onebyte(i2c, (addr << 1)  + 1); // addr + Read
+    (void)__onebyte(i2c, (addr << 1)  + 1); // addr + Read
     if (0 != __onebit(i2c, 1)) { // check ACK
         __stop(i2c);
         return 0;
@@ -121,7 +121,7 @@ uint8_t softi2c_read(const struct softi2c_platform *__FAR i2c,
     for (i = 0; i < len;) {
         ++i;
         *dat++ = __onebyte(i2c, 0xFF);
-        __onebit(i2c, i >= len); // ACK , last NACK
+        (void)__onebit(i2c, i >= len); // ACK , last NACK
     }
     __stop(i2c);
     return i;
@@ -138,13 +138,13 @@ uint8_t softi2c_write_then_read(const struct softi2c_platform *__FAR i2c,
 
     __start(i2c); // start
     if (w != 0 && wlen != 0) { // write
-        __onebyte(i2c, addr << 1); // addr + Write
+        (void)__onebyte(i2c, addr << 1); // addr + Write
         if (0 != __onebit(i2c, 1)) { // check ACK
             goto __ret;
         }
 
         for (written = 0; written < wlen; ++written) {
-            __onebyte(i2c, *w++);
+            (void)__onebyte(i2c, *w++);
             if (0 != __onebit(i2c, 1)) { // check ACK
                 goto __ret;
             }
@@ -155,7 +155,7 @@ uint8_t softi2c_write_then_read(const struct softi2c_platform *__FAR i2c,
     }
 
     if (r != 0 && rlen != 0) {
-        __onebyte(i2c, (addr << 1)  + 1); // addr + Read
+        (void)__onebyte(i2c, (addr << 1)  + 1); // addr + Read
         if (0 != __onebit(i2c, 1)) { // check ACK
             goto __ret;
         }
@@ -163,7 +163,7 @@ uint8_t softi2c_write_then_read(const struct softi2c_platform *__FAR i2c,
         for (readed = 0; readed < rlen;) {
             ++readed;
             *r++ = __onebyte(i2c, 0xFF);
-            __onebit(i2c, readed >= rlen); // ACK , last NACK
+            (void)__onebit(i2c, readed >= rlen); // ACK , last NACK
         }
     }
 

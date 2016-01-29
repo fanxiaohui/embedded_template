@@ -16,19 +16,8 @@
 #define __FAR
 #endif
 
-#ifndef RINGBUFFER_CHECK
-#define RINGBUFFER_CHECK 1
-#endif
-
-
-#define RINGBUFFER_CHECK_MAGIC (0xfade7643UL)
-
-
 /** 循环Buffer结构体. */
 struct ringbuffer {
-#if RINGBUFFER_CHECK != 0
-    unsigned long magic;
-#endif
     RINGBUFFER_SIZE_TYPE cap;
     RINGBUFFER_SIZE_TYPE len;
     RINGBUFFER_SIZE_TYPE in;
@@ -39,52 +28,28 @@ struct ringbuffer {
 typedef struct ringbuffer *__FAR ringbuffer_t;
 
 /** 定义静态循环Buffer的宏. */
-#if RINGBUFFER_CHECK != 0
 #define RINGBUFFER_DEFINE_STATIC(name, size)  \
 static unsigned char __##name##_buffer[size]; \
-static struct ringbuffer name = {            \
-    (unsigned long)RINGBUFFER_CHECK_MAGIC,    \
+static struct ringbuffer __name = {            \
     size,                                     \
     0,                                        \
     0,                                        \
     0,                                        \
     __##name##_buffer,                        \
-}
-#else
-#define RINGBUFFER_DEFINE_STATIC(name, size)  \
-static unsigned char __##name##_buffer[size]; \
-static struct ringbuffer name = {            \
-    size,                                     \
-    0,                                        \
-    0,                                        \
-    0,                                        \
-    __##name##_buffer,                        \
-}
-#endif                                        \
+};                                            \
+const static ringbuffer_t name = &__name
 
 /** 定义循环Buffer的宏. */
-#if RINGBUFFER_CHECK != 0
 #define RINGBUFFER_DEFINE(name, size)         \
 static unsigned char __##name##_buffer[size]; \
-ringbuffer_t name = {                        \
-    (unsigned long)RINGBUFFER_CHECK_MAGIC,    \
+static ringbuffer_t name = {                  \
     size,                                     \
     0,                                        \
     0,                                        \
     0,                                        \
     __##name##_buffer,                        \
-}
-#else
-#define RINGBUFFER_DEFINE(name, size)         \
-static unsigned char __##name##_buffer[size]; \
-ringbuffer_t name = {                        \
-    size,                                     \
-    0,                                        \
-    0,                                        \
-    0,                                        \
-    __##name##_buffer,                        \
-}
-#endif                                        \
+};                                            \
+const ringbuffer_t name = &__name
 
 /// \brief ringbuffer_clear 清空循环Buffer
 ///

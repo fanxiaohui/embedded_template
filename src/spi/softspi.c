@@ -8,14 +8,14 @@ uint8_t softspi_init(struct softspi *__FAR bus, uint8_t flags) {
     bus->flags = flags;
 
     for (i = 0u; i < plat->cs_num; ++i) {
-        gpio_init(gpio_ops, plat->cs_pins[i], GPIO_MODE_OUTPUT_PUSHPULL);
-        gpio_set_output(gpio_ops, plat->cs_pins[i], 1u);
+        (void)gpio_init(gpio_ops, plat->cs_pins[i], GPIO_MODE_OUTPUT_PUSHPULL);
+        (void)gpio_set_output(gpio_ops, plat->cs_pins[i], 1u);
     }
 
-    gpio_init(gpio_ops, plat->clk, GPIO_MODE_OUTPUT_PUSHPULL);
-    gpio_set_output(gpio_ops, plat->clk, flags & SPI_FLAG_CLK_IDLE_HIGH);
-    gpio_init(gpio_ops, plat->mosi, GPIO_MODE_OUTPUT_PUSHPULL);
-    gpio_init(gpio_ops, plat->miso, GPIO_MODE_INPUT);
+    (void)gpio_init(gpio_ops, plat->clk, GPIO_MODE_OUTPUT_PUSHPULL);
+    (void)gpio_set_output(gpio_ops, plat->clk, flags & SPI_FLAG_CLK_IDLE_HIGH);
+    (void)gpio_init(gpio_ops, plat->mosi, GPIO_MODE_OUTPUT_PUSHPULL);
+    (void)gpio_init(gpio_ops, plat->miso, GPIO_MODE_INPUT);
 
     return 1u;
 }
@@ -26,10 +26,10 @@ uint8_t softspi_config_clk_idle(struct softspi *__FAR bus, uint8_t is_high) {
 
     if (is_high) {
         bus->flags |= SPI_FLAG_CLK_IDLE_HIGH;
-        gpio_set_output(gpio_ops, plat->clk, 1u);
+        (void)gpio_set_output(gpio_ops, plat->clk, 1u);
     } else {
         bus->flags &= (uint8_t)(~SPI_FLAG_CLK_IDLE_HIGH);
-        gpio_set_output(gpio_ops, plat->clk, 0u);
+        (void)gpio_set_output(gpio_ops, plat->clk, 0u);
     }
 
     return 1u;
@@ -76,39 +76,39 @@ uint8_t softspi_select(struct softspi *__FAR bus, uint8_t which, uint8_t is_sele
         return 0u;
     }
 
-    gpio_set_output(gpio_ops, plat->cs_pins[which], is_select == 0u);
+    (void)gpio_set_output(gpio_ops, plat->cs_pins[which], is_select == 0u);
     return 1u;
 }
 
-inline static uint8_t __transmit_1st_edge_msb_first(struct softspi_platform const *__FAR plat, uint8_t *__FAR dat, uint8_t clk_idle_high) {
+inline static uint8_t __transmit_1st_edge_msb_first(struct softspi_platform const *__FAR plat, uint8_t *dat, uint8_t clk_idle_high) {
     uint8_t s, r, b;
     gpio_ops_t gpio_ops = plat->gpio_ops;
 
     s = *dat;
     r = 0u;
     for (b = 0x80u; b != 0u; b = b >> 1) {
-        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
-        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        (void)gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
         if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
-        gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
     }
 
     *dat = r;
     return 1;
 }
 
-inline static uint8_t __transmit_2st_edge_msb_first(struct softspi_platform const *__FAR plat, uint8_t *__FAR dat, uint8_t clk_idle_high) {
+inline static uint8_t __transmit_2st_edge_msb_first(struct softspi_platform const *__FAR plat, uint8_t *dat, uint8_t clk_idle_high) {
     uint8_t s, r, b;
     gpio_ops_t gpio_ops = plat->gpio_ops;
 
     s = *dat;
     r = 0;
     for (b = 0x80; b != 0; b = b >> 1) {
-        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
-        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
-        gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        (void)gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
         if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
@@ -118,35 +118,35 @@ inline static uint8_t __transmit_2st_edge_msb_first(struct softspi_platform cons
     return 1;
 }
 
-inline static uint8_t __transmit_1st_edge_lsb_first(struct softspi_platform const *__FAR plat, uint8_t *__FAR dat, uint8_t clk_idle_high) {
+inline static uint8_t __transmit_1st_edge_lsb_first(struct softspi_platform const *__FAR plat, uint8_t *dat, uint8_t clk_idle_high) {
     uint8_t s, r, b;
     gpio_ops_t gpio_ops = plat->gpio_ops;
 
     s = *dat;
     r = 0;
     for (b = 0x01; b != 0; b = b << 1) {
-        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
-        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        (void)gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
         if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
-        gpio_set_output(gpio_ops, plat->clk, clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->clk, clk_idle_high);
     }
 
     *dat = r;
     return 1;
 }
 
-inline static uint8_t __transmit_2st_edge_lsb_first(struct softspi_platform const *__FAR plat, uint8_t *__FAR dat, uint8_t clk_idle_high) {
+inline static uint8_t __transmit_2st_edge_lsb_first(struct softspi_platform const *__FAR plat, uint8_t *dat, uint8_t clk_idle_high) {
     uint8_t s, r, b;
     gpio_ops_t gpio_ops = plat->gpio_ops;
 
     s = *dat;
     r = 0;
     for (b = 0x01; b != 0; b = b << 1) {
-        gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
-        gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
-        gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->clk, 0 == clk_idle_high);
+        (void)gpio_set_output(gpio_ops, plat->mosi, 0 != (b & s));
+        (void)gpio_set_output(gpio_ops, plat->clk, 0 != clk_idle_high);
         if (gpio_input_is_high(gpio_ops, plat->miso)) {
             r |= b;
         }
@@ -156,7 +156,7 @@ inline static uint8_t __transmit_2st_edge_lsb_first(struct softspi_platform cons
     return 1;
 }
 
-uint8_t softspi_transmit(struct softspi *__FAR bus, uint8_t *__FAR dat) {
+uint8_t softspi_transmit(struct softspi *__FAR bus, uint8_t *dat) {
     if (bus->flags & SPI_FLAG_LSB_FIRST) {
         if (bus->flags & SPI_FLAG_CLK_FIRST_EDGE) {
             return __transmit_1st_edge_lsb_first(bus->platform, dat, bus->flags & SPI_FLAG_CLK_IDLE_HIGH);

@@ -40,5 +40,6 @@ char dac856x_set_output(dac856x_t dac856x, uint32_t voltage);
 
 
 uint16_t dac856x_get_regvalue(dac856x_t dac856x);
+char dac856x_set_regvalue(dac856x_t dev, uint16_t regval);
 
 #endif

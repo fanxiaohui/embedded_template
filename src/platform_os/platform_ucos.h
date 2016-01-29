@@ -122,8 +122,8 @@ static inline void os_lock_mutex(os_mutex_t mutex) {
 //void os_unlock_mutex(os_mutex_t mutex);
 static inline void os_unlock_mutex(os_mutex_t mutex) {
     INT8U err;
-    OSSemSet(mutex, 0, &err);
-    OSSemPost(mutex);
+    (void)OSSemSet(mutex, 0, &err);
+    (void)OSSemPost(mutex);
 }
 
 /// \brief os_get_time 获取系统时间.
@@ -131,8 +131,23 @@ static inline void os_unlock_mutex(os_mutex_t mutex) {
 /// \return 系统时间.
 /// \note 这个值得绝对值无所谓, 但是以ms为单位递增.
 //os_time_t os_get_time(void);
-static os_time_t os_get_time(void) {
-    return OSTimeGet() * 1000 / OS_TICKS_PER_SEC;
+static inline os_time_t os_get_time(void) {
+    return OSTimeGet() * (1000 / OS_TICKS_PER_SEC);
+}
+
+static inline void os_sleep(os_time_t ms) {
+    os_time_t tick = ms * (1000 / OS_TICKS_PER_SEC);
+    for (;;) {
+        if (tick > 65535) {
+            OSTimeDly(65535);
+            tick -= 65535;
+        } else if (tick != 0) {
+            OSTimeDly((uint16_t)tick);
+            return;
+        } else {
+            return;
+        }
+    }
 }
 
 #endif

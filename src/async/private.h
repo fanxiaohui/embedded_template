@@ -1,7 +1,7 @@
 #ifndef __ASYNC_PRIVATE_H__
 #define __ASYNC_PRIVATE_H__
 
-#include "platform_os/platform.h"
+#include "platform_os/platform_os.h"
 
 #include "./async.h"
 #include "./looper.h"
