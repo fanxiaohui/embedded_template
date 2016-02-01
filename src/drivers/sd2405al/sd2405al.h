@@ -14,7 +14,7 @@ uint8_t sd2405_init(sd2405_t platform);
 uint8_t sd2405_write_time(sd2405_t platform,
                           uint32_t time);
 uint8_t sd2405_read_time(sd2405_t platform,
-                         uint32_t *__FAR time);
+                         uint32_t *time);
 uint8_t sd2405_store_data(sd2405_t platform,
                           const uint8_t *__FAR dat,
                           uint8_t offset,

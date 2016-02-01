@@ -92,12 +92,22 @@ uint8_t sd2405_init(struct sd2405 *__FAR dev) {
 
     dev->ctr1 = dat[0];
     dev->ctr2 = dat[1];
+
+    if ((dev->ctr2 & (1 << 3)) == 0) {
+        dev->ctr2 |= 1 << 3;
+
+        if (!write_enable(dev, 1)) {
+            return 0;
+        }
+
+        write_enable(dev, 0);
+    }
     return 1;
 }
 
 
 uint8_t sd2405_write_time(struct sd2405 *__FAR dev, uint32_t seconds) {
-    datetime_t t;
+    struct datetime t;
     uint8_t reg_and_dat[8];
 
     if (!write_enable(dev, 1)) {
@@ -126,9 +136,9 @@ uint8_t sd2405_write_time(struct sd2405 *__FAR dev, uint32_t seconds) {
 }
 
 
-uint8_t sd2405_read_time(struct sd2405 *__FAR dev, uint32_t *__FAR seconds) {
+uint8_t sd2405_read_time(struct sd2405 *__FAR dev, uint32_t *seconds) {
     uint8_t treg[7];
-    datetime_t t;
+    struct datetime t;
 
     if (seconds == 0) {
         return 0;
@@ -249,7 +259,7 @@ uint8_t sd2405_clear_interrupt(struct sd2405 *__FAR dev) {
 }
 
 uint8_t sd2405_set_alarm(struct sd2405 *__FAR dev, uint32_t seconds) {
-    datetime_t t;
+    struct datetime t;
     uint8_t reg_and_dat[9];
 
     if (!write_enable(dev, 1)) {

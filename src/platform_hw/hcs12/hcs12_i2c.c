@@ -312,7 +312,6 @@ struct i2c_operations hcs12_i2c_ops = {
     hcs12_i2c_init,
     hcs12_i2c_deinit,
     hcs12_i2c_write_then_read,
-
 };
 
 

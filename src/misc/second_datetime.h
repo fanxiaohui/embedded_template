@@ -7,7 +7,7 @@
 #define __FAR
 #endif
 
-typedef struct {
+struct datetime {
     /// 年, 从1表示 2001年.
     uint8_t year;
     /// 月, 1-12.
@@ -22,10 +22,10 @@ typedef struct {
     uint8_t minute;
     /// 秒, 0-59.
     uint8_t second;
-} datetime_t;
+};
 
-uint8_t second_to_datetime(datetime_t *__FAR datetime, uint32_t second);
-uint8_t datetime_to_second(uint32_t *__FAR seconds, const datetime_t *__FAR datetime);
-uint8_t datetime_is_valid(const datetime_t *__FAR datetime, uint8_t need_check_weekday);
+uint8_t second_to_datetime(struct datetime *datetime, uint32_t second);
+uint8_t datetime_to_second(uint32_t *seconds, const struct datetime *datetime);
+uint8_t datetime_is_valid(const struct datetime *datetime, uint8_t need_check_weekday);
 
 #endif
