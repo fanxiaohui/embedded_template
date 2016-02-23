@@ -4,7 +4,6 @@
 #include <stdio.h>
 #include "shell_platform.h"
 
-
 #ifndef SHELL_WELCOM_MESSAGE
 #define SHELL_WELCOM_MESSAGE     "Hello, this is a shell."
 #endif
@@ -120,7 +119,7 @@ static const struct shell_command *shell_execute_command_in_commands(const struc
     return NULL;
 }
 
-void shell_execute_command(char *cmd) {
+void __shell_execute_command(char *cmd) {
     char *p, *temp;
     int i, inside_quotes;
     char quote_char;
@@ -257,7 +256,7 @@ static void getline(char *buf, int buf_size) {
             continue;
         }
 
-        if (c == '\r') {
+        if (c == '\n') {
             //putchar('\n');
             *buf = 0;
             return;
@@ -286,7 +285,15 @@ void shell_loop(void) {
         if (strlen(cmd) == 0) {
             continue;
         }
-        shell_execute_command(cmd);
+        __shell_execute_command(cmd);
     }
+}
+
+
+void shell_execute_command(const char *ccmd) {
+    char cmd[SHELL_MAXSIZE];
+    (void)memset(cmd, 0, sizeof(cmd));
+    (void)strncpy(cmd, ccmd, sizeof(cmd) - 1);
+    __shell_execute_command(cmd);
 }
 
