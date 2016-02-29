@@ -11,9 +11,7 @@ int16_t ads8317_read(const struct ads8317_platform *__FAR dev) {
     uint16_t ret;
 
     (void)spi_select(&dev->bus, 0, 1);
-    (void)spi_transmit(&dev->bus, &buf[0]);
-    (void)spi_transmit(&dev->bus, &buf[1]);
-    (void)spi_transmit(&dev->bus, &buf[2]);
+    (void)spi_transfer(&dev->bus, 0, buf, 3);
     (void)spi_select(&dev->bus, 0, 0);
 
     ret = ((uint16_t)buf[0]) << 14;

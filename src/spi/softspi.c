@@ -20,6 +20,12 @@ uint8_t softspi_init(struct softspi *__FAR bus, uint8_t flags) {
     return 1u;
 }
 
+
+void softspi_deinit(struct softspi *__FAR bus) {
+    (void)bus;
+}
+
+/*
 uint8_t softspi_config_clk_idle(struct softspi *__FAR bus, uint8_t is_high) {
     const struct softspi_platform *__FAR plat = bus->platform;
     gpio_ops_t gpio_ops = plat->gpio_ops;
@@ -66,6 +72,7 @@ uint8_t softspi_config_first_bit(struct softspi *__FAR bus, uint8_t is_lsb_first
 uint8_t softspi_is_lsb_first(struct softspi *__FAR bus) {
     return (bus->flags & SPI_FLAG_LSB_FIRST );
 }
+*/
 
 
 uint8_t softspi_select(struct softspi *__FAR bus, uint8_t which, uint8_t is_select) {
@@ -156,7 +163,7 @@ inline static uint8_t __transmit_2st_edge_lsb_first(struct softspi_platform cons
     return 1;
 }
 
-uint8_t softspi_transmit(struct softspi *__FAR bus, uint8_t *dat) {
+uint8_t softspi_transmit_byte(struct softspi *__FAR bus, uint8_t *dat) {
     if (bus->flags & SPI_FLAG_LSB_FIRST) {
         if (bus->flags & SPI_FLAG_CLK_FIRST_EDGE) {
             return __transmit_1st_edge_lsb_first(bus->platform, dat, bus->flags & SPI_FLAG_CLK_IDLE_HIGH);
@@ -172,15 +179,17 @@ uint8_t softspi_transmit(struct softspi *__FAR bus, uint8_t *dat) {
     }
 }
 
+
+uint16_t softspi_transfer(struct softspi *__FAR bus, uint8_t *__FAR r, const uint8_t *__FAR w, uint16_t len) {
+    return spi_transfer_use_transmit_onebyte(bus, &softspi_ops, r, w, len);
+}
+
+
 const struct spi_operations softspi_ops = {
     (spi_init_func)softspi_init,
-    (spi_config_clk_idle_func)softspi_config_clk_idle,
-    (spi_is_clk_idle_high_fucn)softspi_is_clk_idle_high,
-    (spi_config_clk_edge_func)softspi_config_clk_edge,
-    (spi_is_clk_first_edge_func)softspi_is_clk_edge_first,
-    (spi_config_first_bit_func)softspi_config_first_bit,
-    (spi_is_lsb_first_func)softspi_is_lsb_first,
+    (spi_deinit_func)softspi_deinit,
     (spi_select_func)softspi_select,
-    (spi_transmit_func)softspi_transmit,
+    (spi_transmit_byte_func)softspi_transmit_byte,
+    (spi_transfer_func)softspi_transfer,
 };
 

@@ -15,8 +15,8 @@
 #define LTC6804_CMD_RDCVB   0x006       // ¶Áµç³ØµçÑ¹¼Ä´æÆ÷×éB,[4,5,6]
 #define LTC6804_CMD_RDCVC   0x008       // ¶Áµç³ØµçÑ¹¼Ä´æÆ÷×éC,[7,8,9]
 #define LTC6804_CMD_RDCVD   0x00A       // ¶Áµç³ØµçÑ¹¼Ä´æÆ÷×éD,[10,11,12]
-#define LTC6804_CMD_RDAUXA  0x00C		// ¶Á¸¨Öú¼Ä´æÆ÷A
-#define LTC6804_CMD_RDAUXB  0x00E		// ¶Á¸¨Öú¼Ä´æÆ÷B
+#define LTC6804_CMD_RDAUXA  0x00C       // ¶Á¸¨Öú¼Ä´æÆ÷A
+#define LTC6804_CMD_RDAUXB  0x00E       // ¶Á¸¨Öú¼Ä´æÆ÷B
 #define LTC6804_CMD_ADCV    (0x260 | LTC6804_CMD_BITS_MD | LTC6804_CMD_BITS_DCP | LTC6804_CMD_BITS_CH)
 #define LTC6804_CMD_ADAX    (0x460 | LTC6804_CMD_BITS_MD | LTC6804_CMD_BITS_DCP | LTC6804_CMD_BITS_CHG)
 #define LTC6804_CMD_ADCVAX  (0x46F | LTC6804_CMD_BITS_MD | LTC6804_CMD_BITS_DCP)    // Æô¶¯ËùÓÐµç³ØºÍGPIO1,GPIO2²âÁ¿
@@ -102,18 +102,15 @@ static void ltc_wake_up(const struct ltc6804_platform *platform) {
 }
 
 static void ltc_send_short_and_crc(const struct ltc6804_platform *platform, uint16_t data) {
-    uint8_t tmp[2];
+    uint8_t tmp[4];
     uint16_t crc;
     tmp[0] = (uint8_t)(data >> 8);
     tmp[1] = (uint8_t)data;
     crc = calc_crc16(tmp, sizeof(tmp));
-    (void)spi_transmit(&platform->bus, &tmp[0]);
-    (void)spi_transmit(&platform->bus, &tmp[1]);
+    tmp[2] = (crc >> 8);
+    tmp[3] = (uint8_t)(crc);
 
-    tmp[0] = (crc >> 8);
-    tmp[1] = (uint8_t)(crc);
-    (void)spi_transmit(&platform->bus, &tmp[0]);
-    (void)spi_transmit(&platform->bus, &tmp[1]);
+    (void)spi_transfer(&platform->bus, 0, tmp, 4);
 }
 
 /**
@@ -127,24 +124,19 @@ static void ltc_send_short_and_crc(const struct ltc6804_platform *platform, uint
  */
 static void ltc_send_data_daisychain(const struct ltc6804_platform *platform, uint8_t count, uint16_t cmd, uint8_t const *dat, uint8_t len) {
     uint16_t crc;
-    uint8_t i;
-    uint8_t tmp;
+    uint8_t tmp[2];
 
     ltc_wake_up(platform);
 
     (void)spi_select(&platform->bus, platform->cs_index, 1);
     ltc_send_short_and_crc(platform, cmd);
     crc = calc_crc16(dat, len);
+    tmp[0] = crc >> 8;
+    tmp[1] = (uint8_t)crc;
 
     if (dat != NULL && count > 0) {
-        for (i = 0; i < len; i++) {
-            tmp = dat[i];
-            (void)spi_transmit(&platform->bus, &tmp);
-        }
-        tmp = crc >> 8;
-        (void)spi_transmit(&platform->bus, &tmp);
-        tmp = (uint8_t)crc;
-        (void)spi_transmit(&platform->bus, &tmp);
+        (void)spi_transfer(&platform->bus, 0, dat, len);
+        (void)spi_transfer(&platform->bus, 0, tmp, 2);
     }
     (void)spi_select(&platform->bus, platform->cs_index, 0);
 }
@@ -160,7 +152,6 @@ static void ltc_send_data_daisychain(const struct ltc6804_platform *platform, ui
  * @todo Ä¿Ç°½öÊµÏÖµ¥¸öÄ£¿éµÄ½ÓÊÕ´¦Àí,´ýºóÆÚ²¹³ä
  */
 static uint8_t ltc_recv_data_daisychain(const struct ltc6804_platform *platform, uint8_t count, uint16_t cmd, uint8_t *buf, int size) {
-    uint8_t i;
     uint16_t crc;
     uint8_t crc_recv[2] = { 0xff, 0xff};
     if (buf == NULL) return 0;
@@ -169,13 +160,8 @@ static uint8_t ltc_recv_data_daisychain(const struct ltc6804_platform *platform,
     ltc_wake_up(platform);
     (void)spi_select(&platform->bus, platform->cs_index, 1);
     ltc_send_short_and_crc(platform, cmd);
-    for (i = 0; i < size; i++) {
-        (void)spi_transmit(&platform->bus, &buf[i]);
-    }
-    if (size > 0) {
-        (void)spi_transmit(&platform->bus, &crc_recv[0]);
-        (void)spi_transmit(&platform->bus, &crc_recv[1]);
-    }
+    (void)spi_transfer(&platform->bus, 0, buf, size);
+    (void)spi_transfer(&platform->bus, crc_recv, 0, 2);
     (void)spi_select(&platform->bus, platform->cs_index, 0);
 
     if (size > 0) {

@@ -17,14 +17,10 @@ typedef const struct spi_bus *__FAR spi_bus_t;
 #define SPI_FLAG_MSB_FIRST         0x00
 
 inline uint8_t spi_init(spi_bus_t bus, uint8_t flags);
-inline uint8_t spi_config_clk_idle(spi_bus_t bus, uint8_t is_low);
-inline uint8_t spi_is_clk_idle_high(spi_bus_t bus);
-inline uint8_t spi_config_clk_edge(spi_bus_t bus, uint8_t is_first);
-inline uint8_t spi_is_clk_edge_first(spi_bus_t bus);
-inline uint8_t spi_config_first_bit(spi_bus_t bus, uint8_t is_lsb_first);
-inline uint8_t spi_is_lsb_first(spi_bus_t bus);
+inline void spi_deinit(spi_bus_t bus);
 inline uint8_t spi_select(spi_bus_t bus, uint8_t which, uint8_t is_select);
-inline uint8_t spi_transmit(spi_bus_t bus, uint8_t *b);
+inline uint8_t spi_transmit_byte(const struct spi_bus *__FAR bus, uint8_t *b);
+inline uint16_t spi_transfer(spi_bus_t bus, uint8_t *__FAR r, const uint8_t *__FAR w, uint16_t len);
 
 #endif
 

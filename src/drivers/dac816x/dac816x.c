@@ -2,16 +2,13 @@
 
 
 static void transmit(struct dac816x_platform const *__FAR platform, uint8_t cmd, uint16_t dat) {
-    uint8_t buf;
+    uint8_t buf[3];
+    buf[0] = cmd;
+    buf[1] = dat >> 8;
+    buf[2] = dat;
 
     (void)spi_select(&platform->bus, platform->cs_index, 1);
-
-    (void)spi_transmit(&platform->bus, &cmd);
-    buf = dat >> 8;
-    (void)spi_transmit(&platform->bus, &buf);
-    buf = (uint8_t)dat;
-    (void)spi_transmit(&platform->bus, &buf);
-
+    (void)spi_transfer(&platform->bus, 0, buf, 3);
     (void)spi_select(&platform->bus, platform->cs_index, 0);
 }
 

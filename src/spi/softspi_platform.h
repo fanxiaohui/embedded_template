@@ -2,7 +2,6 @@
 #define __SOFTSPI_PLATFORM_H__
 
 #include "softspi.h"
-
 #include "spi/spi_platform.h"
 #include "gpio/gpio_platform.h"
 
@@ -19,6 +18,7 @@ struct softspi {
     uint8_t flags;
     const struct softspi_platform *__FAR platform;
 };
+
 
 
 extern const struct spi_operations softspi_ops;

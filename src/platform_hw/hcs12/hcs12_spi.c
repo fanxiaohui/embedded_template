@@ -22,14 +22,20 @@ uint8_t hcs12_spi_init(const struct hcs12_spi_platform *__FAR platform, uint8_t 
     return 1;
 }
 
+void hcs12_spi_deinit(const struct hcs12_spi_platform *__FAR platform) {
+    (void)platform;
+}
+
 uint8_t hcs12_spi_select(const struct hcs12_spi_platform *__FAR platform, uint8_t which, uint8_t is_select) {
     if (which >= platform->cs_num) return 0;
     (void)hcs12_gpio_set_output(&platform->cs_pins[which], 0 == is_select);
     return 1;
 }
 
-uint8_t hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint8_t *dat) {
+uint8_t hcs12_spi_transmit_byte(const struct hcs12_spi_platform *__FAR platform, uint8_t *dat) {
     uint16_t i;
+
+    i = 0;
     for (;;) { // wait transmit emtpy
         if (platform->regs->sr.Bits.SPTEF) break;
         if (i > 10000) return 0;
@@ -40,9 +46,10 @@ uint8_t hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint
     platform->regs->dr.Overlap_STR.SPI0DRLSTR.Byte = *dat;
 
 
+    i = 0;
     for (;;) { // wait data recved
         if (platform->regs->sr.Bits.SPIF) break;
-        if (i > 100000) return 0;
+        if (i > 10000) return 0;
         ++i;
     }
 
@@ -50,14 +57,15 @@ uint8_t hcs12_spi_transmit(const struct hcs12_spi_platform *__FAR platform, uint
     return 1;
 }
 
+uint16_t hcs12_spi_transfer(const struct hcs12_spi_platform *__FAR platform, uint8_t *__FAR r, const uint8_t *__FAR w, uint16_t len) {
+    return spi_transfer_use_transmit_onebyte(platform, &hcs12_spi_ops, r, w, len);
+}
+
+
 struct spi_operations hcs12_spi_ops = {
     hcs12_spi_init,
-    (spi_config_clk_idle_func)0, //spi_config_clk_idle_func config_clk_idle;
-    (spi_is_clk_idle_high_fucn)0, //spi_is_clk_idle_high_fucn is_clk_idle_high;
-    (spi_config_clk_edge_func)0, //spi_config_clk_edge_func config_clk_edge;
-    (spi_is_clk_idle_high_fucn)0, //spi_is_clk_idle_high_fucn is_clk_edge_first;
-    (spi_config_first_bit_func)0, //spi_config_first_bit_func config_first_bit;
-    (spi_is_lsb_first_func)0, //spi_is_lsb_first_func is_lsb_first;
+    hcs12_spi_deinit,
     hcs12_spi_select,
-    hcs12_spi_transmit,
+    hcs12_spi_transmit_byte,
+    hcs12_spi_transfer,
 };
