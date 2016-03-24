@@ -1,6 +1,7 @@
 include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
+    ${CMAKE_CURRENT_SOURCE_DIR}/platform_os
 )
 
 set(SOURCES "")
@@ -18,35 +19,3 @@ add_library(
     embedded
     ${SOURCES}
 )
-
-add_library(
-    embedded_test
-    ${TEST_SOURCES}
-)
-
-
-add_executable(
-    unit_test 
-    unit_test.c
-)
-
-target_link_libraries(
-    unit_test
-    embedded_test
-    embedded
-    unity
-)
-
-add_executable(
-    async_example
-    async_example.c
-)
-
-target_link_libraries(
-    async_example
-    embedded
-    pthread
-    rt
-    m
-)
-

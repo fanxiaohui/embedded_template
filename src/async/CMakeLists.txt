@@ -1,9 +1,8 @@
 set(SOURCES
-    $ {SOURCES}
-    $ {CMAKE_CURRENT_SOURCE_DIR} / async.c
-    $ {CMAKE_CURRENT_SOURCE_DIR} / event.c
-    $ {CMAKE_CURRENT_SOURCE_DIR} / looper.c
-    $ {CMAKE_CURRENT_SOURCE_DIR} / platform_posix.c
+    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/async.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/event.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/looper.c
     PARENT_SCOPE
    )
 
