@@ -75,8 +75,8 @@ static inline uint8_t __calWeekDay(uint32_t second) {
     second = (second % SECONDS_PER_WEEK);
     day = (uint8_t)((uint32_t)(second / SECONDS_PER_DAY));
     day += 5; // 2000-1-1ÊÇĞÇÆÚÁù
-    if (day > 6) {
-        return day - 6;
+    if (day >= 7) {
+        return day - 7;
     }
 
     return day;

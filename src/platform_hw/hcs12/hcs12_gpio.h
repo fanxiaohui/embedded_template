@@ -1,7 +1,7 @@
 #ifndef __HCS12_GPIO_H__
 #define __HCS12_GPIO_H__
 
-#include <stdint.h>
+#include "stdint.h"
 
 #include "gpio/gpio.h"
 

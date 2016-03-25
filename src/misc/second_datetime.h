@@ -1,7 +1,7 @@
 #ifndef __SECOND_DATE_H__
 #define __SECOND_DATE_H__
 
-#include <stdint.h>
+#include "stdint.h"
 
 #ifndef __FAR
 #define __FAR

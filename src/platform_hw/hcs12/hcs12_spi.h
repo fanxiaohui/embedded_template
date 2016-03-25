@@ -1,7 +1,7 @@
 #ifndef __HCS12_SPI_H__
 #define __HCS12_SPI_H__
 
-#include <stdint.h>
+#include "stdint.h"
 #include "spi/spi.h"
 
 typedef const struct hcs12_spi_platform *__FAR hcs12_spi_t;

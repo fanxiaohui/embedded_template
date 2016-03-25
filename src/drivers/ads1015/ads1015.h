@@ -1,7 +1,7 @@
 #ifndef __ADS1015_H__
 #define __ADS1015_H__
 
-#include <stdint.h>
+#include "stdint.h"
 
 #ifndef __FAR
 #define __FAR

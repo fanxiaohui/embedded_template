@@ -1,7 +1,7 @@
 #ifndef __PLATFORM_FREERTOS_H__
 #define __PLATFORM_FREERTOS_H__
 
-#include <stdint.h>
+#include "stdint.h"
 #include "ucos_ii.h"
 
 typedef OS_EVENT *os_sem_t;

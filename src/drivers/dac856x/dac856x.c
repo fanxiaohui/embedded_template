@@ -25,24 +25,26 @@ char dac856x_init(struct dac856x *__FAR dev) {
 }
 
 char dac856x_set_power(struct dac856x *__FAR dev, enum dac856x_power power_status) {
-    dev->power_status = (uint8_t)power_status;
-    update_to_device(dev);
-    return 1;
-}
-
-
-char dac856x_set_output(struct dac856x *__FAR dev, uint32_t voltage) {
-    dev->dac_value = (voltage / 100 * 65536  + dev->ref_vol_dot_1mv / 2) / dev->ref_vol_dot_1mv;
-    update_to_device(dev);
+    if (dev->power_status != (uint8_t)power_status) {
+        dev->power_status = (uint8_t)power_status;
+        update_to_device(dev);
+    }
     return 1;
 }
 
 char dac856x_set_regvalue(struct dac856x *__FAR dev, uint16_t regval) {
-    dev->dac_value = regval;
-    update_to_device(dev);
+    if (dev->dac_value != regval) {
+        dev->dac_value = regval;
+        update_to_device(dev);
+    }
     return 1;
 }
 
 uint16_t dac856x_get_regvalue(struct dac856x *__FAR dev) {
     return dev->dac_value;
+}
+
+char dac856x_set_output(struct dac856x *__FAR dev, uint32_t voltage) {
+    uint32_t dac_value = (voltage / 100 * 65536  + dev->ref_vol_dot_1mv / 2) / dev->ref_vol_dot_1mv;
+    return dac856x_set_regvalue(dev, (uint16_t)dac_value);
 }

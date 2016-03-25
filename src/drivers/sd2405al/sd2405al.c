@@ -5,29 +5,7 @@
 //#define dprintf (void)printf
 #define dprintf (void)
 
-// 0x32 => 32(0x20)
-static uint8_t bcd_to_hex(uint8_t bcd) {
-    uint8_t h, l;
-    h = bcd >> 4;
-    if (h > 9) {
-        return 0;
-    }
-    l = bcd & 0x0f;
-    if (l > 9) {
-        return 0;
-    }
-    return h * 10 + l;
-}
 
-// 32(0x20) => 0x32
-static uint8_t hex_to_bcd(uint8_t hex) {
-    uint8_t h;
-    h = hex / 10;
-    if (h > 9) {
-        return 0;
-    }
-    return (h << 4) | (hex % 10);
-}
 
 static uint8_t write_regs(const struct sd2405_platform *__FAR platform,
                           const uint8_t *reg_and_dat,

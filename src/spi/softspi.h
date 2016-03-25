@@ -1,7 +1,7 @@
 #ifndef __SOFTSPI_H__
 #define __SOFTSPI_H__
 
-#include <stdint.h>
+#include "stdint.h"
 #include "spi.h"
 
 #ifndef __FAR

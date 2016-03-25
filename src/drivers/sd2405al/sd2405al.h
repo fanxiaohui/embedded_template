@@ -1,7 +1,7 @@
 #ifndef __SD2405AL_H__
 #define __SD2405AL_H__
 
-#include <stdint.h>
+#include "stdint.h"
 
 #ifndef __FAR
 #define __FAR

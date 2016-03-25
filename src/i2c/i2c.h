@@ -11,10 +11,10 @@ typedef const struct i2c_bus *__FAR i2c_bus_t;
 
 uint8_t i2c_init(i2c_bus_t bus);
 uint8_t i2c_transmit(i2c_bus_t bus,
-                            uint8_t addr,
-                            const uint8_t *__FAR w,
-                            uint8_t wlen,
-                            uint8_t *__FAR r,
-                            uint8_t rlen);
+                     uint8_t addr,
+                     const uint8_t *__FAR w,
+                     uint8_t wlen,
+                     uint8_t *__FAR r,
+                     uint8_t rlen);
 #endif
 

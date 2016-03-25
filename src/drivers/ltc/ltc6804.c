@@ -2,10 +2,9 @@
 #include "ltc6804_platform.h"
 
 #include <stddef.h>
-#include <string.h>
 
 #define LTC6804_CMD_BITS_CH     (0x0UL << 0)        // 所有电池
-#define LTC6804_CMD_BITS_CHG    (0x0UL << 0)        // 所有GPIO
+#define LTC6804_CMD_BITS_CHG    (0x1UL << 0)        // 所有GPIO
 #define LTC6804_CMD_BITS_MD     (0x2UL << 7)        // 7kHz模式
 #define LTC6804_CMD_BITS_DCP    (0x0UL << 4)        // 采样时不允许放电
 
@@ -21,22 +20,10 @@
 #define LTC6804_CMD_ADAX    (0x460 | LTC6804_CMD_BITS_MD | LTC6804_CMD_BITS_DCP | LTC6804_CMD_BITS_CHG)
 #define LTC6804_CMD_ADCVAX  (0x46F | LTC6804_CMD_BITS_MD | LTC6804_CMD_BITS_DCP)    // 启动所有电池和GPIO1,GPIO2测量
 
-
-struct ltc6804CV {
-    uint8_t CVR[6];
-};
-
-struct ltc6804AV {
-    uint8_t AVR[6];
-};
-
-
-
-
 /**
  * 使用下面的函数生成表
  */
-#if 0
+/*
 uint16_t pec16Table[256];
 uint16_t CRC16_POLY = 0x4599;
 static void init_PEC16_Table(void) {
@@ -57,7 +44,7 @@ static void init_PEC16_Table(void) {
         pec16Table[i] = remainder & 0xFFFF;
     }
 }
-#else
+*/
 static const uint16_t pec16Table[] = {
     0x0000, 0xC599, 0xCEAB, 0x0B32, 0xD8CF, 0x1D56, 0x1664, 0xD3FD, 0xF407, 0x319E, 0x3AAC, 0xFF35, 0x2CC8, 0xE951, 0xE263, 0x27FA,
     0xAD97, 0x680E, 0x633C, 0xA6A5, 0x7558, 0xB0C1, 0xBBF3, 0x7E6A, 0x5990, 0x9C09, 0x973B, 0x52A2, 0x815F, 0x44C6, 0x4FF4, 0x8A6D,
@@ -76,7 +63,6 @@ static const uint16_t pec16Table[] = {
     0x0AF8, 0xCF61, 0xC453, 0x01CA, 0xD237, 0x17AE, 0x1C9C, 0xD905, 0xFEFF, 0x3B66, 0x3054, 0xF5CD, 0x2630, 0xE3A9, 0xE89B, 0x2D02,
     0xA76F, 0x62F6, 0x69C4, 0xAC5D, 0x7FA0, 0xBA39, 0xB10B, 0x7492, 0x5368, 0x96F1, 0x9DC3, 0x585A, 0x8BA7, 0x4E3E, 0x450C, 0x8095,
 };
-#endif
 
 static uint16_t calc_crc16(const uint8_t *data, int len) {
     uint16_t remainder = 0;
@@ -94,23 +80,26 @@ static uint16_t calc_crc16(const uint8_t *data, int len) {
 
 static void ltc_wake_up(const struct ltc6804_platform *platform) {
     uint16_t i;
-    (void)spi_select(&platform->bus, platform->cs_index, 1);
+    spi_select(&platform->bus, platform->cs_index, 1);
     for (i = 0; i < 90;) {
         i++;
     }
-    (void)spi_select(&platform->bus, platform->cs_index, 0);
+    spi_select(&platform->bus, platform->cs_index, 0);
 }
 
 static void ltc_send_short_and_crc(const struct ltc6804_platform *platform, uint16_t data) {
-    uint8_t tmp[4];
+    uint8_t tmp[2];
     uint16_t crc;
     tmp[0] = (uint8_t)(data >> 8);
     tmp[1] = (uint8_t)data;
     crc = calc_crc16(tmp, sizeof(tmp));
-    tmp[2] = (crc >> 8);
-    tmp[3] = (uint8_t)(crc);
+    spi_transmit_byte(&platform->bus, &tmp[0]);
+    spi_transmit_byte(&platform->bus, &tmp[1]);
 
-    (void)spi_transfer(&platform->bus, 0, tmp, 4);
+    tmp[0] = (crc >> 8);
+    tmp[1] = (uint8_t)(crc);
+    spi_transmit_byte(&platform->bus, &tmp[0]);
+    spi_transmit_byte(&platform->bus, &tmp[1]);
 }
 
 /**
@@ -124,21 +113,26 @@ static void ltc_send_short_and_crc(const struct ltc6804_platform *platform, uint
  */
 static void ltc_send_data_daisychain(const struct ltc6804_platform *platform, uint8_t count, uint16_t cmd, uint8_t const *dat, uint8_t len) {
     uint16_t crc;
-    uint8_t tmp[2];
+    uint8_t i;
+    uint8_t tmp;
 
     ltc_wake_up(platform);
 
-    (void)spi_select(&platform->bus, platform->cs_index, 1);
+    spi_select(&platform->bus, platform->cs_index, 1);
     ltc_send_short_and_crc(platform, cmd);
     crc = calc_crc16(dat, len);
-    tmp[0] = crc >> 8;
-    tmp[1] = (uint8_t)crc;
 
     if (dat != NULL && count > 0) {
-        (void)spi_transfer(&platform->bus, 0, dat, len);
-        (void)spi_transfer(&platform->bus, 0, tmp, 2);
+        for (i = 0; i < len; i++) {
+            tmp = dat[i];
+            spi_transmit_byte(&platform->bus, &tmp);
+        }
+        tmp = crc >> 8;
+        spi_transmit_byte(&platform->bus, &tmp);
+        tmp = crc;
+        spi_transmit_byte(&platform->bus, &tmp);
     }
-    (void)spi_select(&platform->bus, platform->cs_index, 0);
+    spi_select(&platform->bus, platform->cs_index, 0);
 }
 
 /**
@@ -152,17 +146,23 @@ static void ltc_send_data_daisychain(const struct ltc6804_platform *platform, ui
  * @todo 目前仅实现单个模块的接收处理,待后期补充
  */
 static uint8_t ltc_recv_data_daisychain(const struct ltc6804_platform *platform, uint8_t count, uint16_t cmd, uint8_t *buf, int size) {
+    uint8_t i;
     uint16_t crc;
     uint8_t crc_recv[2] = { 0xff, 0xff};
     if (buf == NULL) return 0;
 
-    (void)memset(buf, 0xff, size);
+    memset(buf, 0xff, size);
     ltc_wake_up(platform);
-    (void)spi_select(&platform->bus, platform->cs_index, 1);
+    spi_select(&platform->bus, platform->cs_index, 1);
     ltc_send_short_and_crc(platform, cmd);
-    (void)spi_transfer(&platform->bus, 0, buf, size);
-    (void)spi_transfer(&platform->bus, crc_recv, 0, 2);
-    (void)spi_select(&platform->bus, platform->cs_index, 0);
+    for (i = 0; i < size; i++) {
+        spi_transmit_byte(&platform->bus, &buf[i]);
+    }
+    if (size > 0) {
+        spi_transmit_byte(&platform->bus, &crc_recv[0]);
+        spi_transmit_byte(&platform->bus, &crc_recv[1]);
+    }
+    spi_select(&platform->bus, platform->cs_index, 0);
 
     if (size > 0) {
         crc = calc_crc16(buf, size);
@@ -172,39 +172,42 @@ static uint8_t ltc_recv_data_daisychain(const struct ltc6804_platform *platform,
     return 1;
 }
 
-void ltc6804_init(const struct ltc6804_platform *platform) {
-    (void)spi_init(&platform->bus, SPI_FLAG_MSB_FIRST | SPI_FLAG_CLK_IDLE_HIGH | SPI_FLAG_CLK_SECOND_EDGE);
+void ltc6804_init(struct ltc6804 *__FAR dev) {
+    const struct ltc6804_platform *platform = dev->platform;
+    spi_init(&platform->bus, SPI_FLAG_MSB_FIRST | SPI_FLAG_CLK_IDLE_HIGH | SPI_FLAG_CLK_SECOND_EDGE);
     ltc_wake_up(platform);
 }
 
-uint8_t ltc6804_1_read_cfg(const struct ltc6804_platform *platform, struct ltc6804CFG *cfg, uint8_t count) {
-    return ltc_recv_data_daisychain(platform, count, LTC6804_CMD_RDCFG, (uint8_t *)cfg, sizeof(*cfg));
+uint8_t ltc6804_1_read_cfg(struct ltc6804 *__FAR dev, struct ltc6804CFG *cfg, uint8_t count) {
+    return ltc_recv_data_daisychain(dev->platform, count, LTC6804_CMD_RDCFG, (uint8_t *)cfg, sizeof(*cfg));
 }
 
-void ltc6804_1_write_cfg(const struct ltc6804_platform *platform, struct ltc6804CFG const *cfg, uint8_t count) {
-    ltc_send_data_daisychain(platform, count, LTC6804_CMD_WRCFG, (uint8_t const *)cfg, sizeof(*cfg));
+void ltc6804_1_write_cfg(struct ltc6804 *__FAR dev, struct ltc6804CFG const *cfg, uint8_t count) {
+    ltc_send_data_daisychain(dev->platform, count, LTC6804_CMD_WRCFG, (uint8_t const *)cfg, sizeof(*cfg));
 }
 
-void ltc6804_1_send_cmd(const struct ltc6804_platform *platform, uint16_t cmd) {
-    ltc_send_data_daisychain(platform, 0, cmd, NULL, 0);
+void ltc6804_1_send_cmd(struct ltc6804 *__FAR dev, uint16_t cmd) {
+    ltc_send_data_daisychain(dev->platform, 0, cmd, NULL, 0);
 }
 
 
-static uint8_t ltc6804_get_voltage_with_group(const struct ltc6804_platform *platform, struct ltc6804CV *cv, uint8_t gid) {
+static uint8_t ltc6804_get_voltage_with_group(struct ltc6804 *__FAR dev, uint8_t gid) {
     static const uint16_t list_cmd_rdcv[] = {
         LTC6804_CMD_RDCVA, LTC6804_CMD_RDCVB, LTC6804_CMD_RDCVC, LTC6804_CMD_RDCVD
     };
 
+    const struct ltc6804_platform *platform = dev->platform;
+
     if (gid < (sizeof(list_cmd_rdcv) / sizeof(list_cmd_rdcv[0]))) {
-        if (ltc_recv_data_daisychain(platform, 1, list_cmd_rdcv[gid], (uint8_t *)cv, sizeof(*cv))) {
-            return (sizeof(cv->CVR) / sizeof(uint16_t));
+        if (ltc_recv_data_daisychain(platform, 1, list_cmd_rdcv[gid], dev->reg.dat, VOL_REG_SIZE)) {
+            return (VOL_REG_SIZE / sizeof(uint16_t));
         }
     }
     return 0;
 }
 
 
-uint8_t ltc6804_start_channel(const struct ltc6804_platform *platform, uint8_t channel) {
+uint8_t ltc6804_start_channel(struct ltc6804 *__FAR dev, uint8_t channel) {
     if (channel < 6) {
         channel += 1;
     } else if (channel < 12) {
@@ -212,26 +215,34 @@ uint8_t ltc6804_start_channel(const struct ltc6804_platform *platform, uint8_t c
     } else {
         return 0;
     }
-    ltc_send_data_daisychain(platform, 1, 0x360 + channel, 0, 0);
+    ltc_send_data_daisychain(dev->platform, 1, 0x360 + channel, 0, 0);
     return 1;
 }
 
-uint8_t ltc6804_start_all(const struct ltc6804_platform *platform) {
-    ltc_send_data_daisychain(platform, 1, 0x360, 0, 0);
+uint8_t ltc6804_start_aux(struct ltc6804 *__FAR dev) {
+    ltc_send_data_daisychain(dev->platform, 1, LTC6804_CMD_ADAX, 0, 0);
     return 1;
 }
 
-uint8_t ltc6804_read(const struct ltc6804_platform *platform, uint16_t cmd, uint8_t *buf, uint8_t len) {
-    return ltc_recv_data_daisychain(platform, 1, cmd, buf, len);
+uint8_t ltc6804_start_all(struct ltc6804 *__FAR dev) {
+    ltc_send_data_daisychain(dev->platform, 1, LTC6804_CMD_ADCVAX, 0, 0);
+    return 1;
 }
 
-static uint8_t ltc6804_get_aux_with_group(const struct ltc6804_platform *platform, struct ltc6804AV *av, uint8_t gid) {
+uint8_t ltc6804_read(struct ltc6804 *__FAR dev, uint16_t cmd, uint8_t *buf, uint8_t len) {
+    return ltc_recv_data_daisychain(dev->platform, 1, cmd, buf, len);
+}
+
+static uint8_t ltc6804_get_aux_with_group(struct ltc6804 *__FAR dev, uint8_t gid) {
     static const uint16_t list_cmd_rdav[] = {
         LTC6804_CMD_RDAUXA, LTC6804_CMD_RDAUXB
     };
+
+    const struct ltc6804_platform *platform = dev->platform;
+
     if (gid < (sizeof(list_cmd_rdav) / sizeof(list_cmd_rdav[0]))) {
-        if (ltc_recv_data_daisychain(platform, 1, list_cmd_rdav[gid], (uint8_t *)av, sizeof(*av))) {
-            return (sizeof(av->AVR) / sizeof(uint16_t));
+        if (ltc_recv_data_daisychain(platform, 1, list_cmd_rdav[gid], dev->reg.dat, VOL_REG_SIZE)) {
+            return (VOL_REG_SIZE / sizeof(uint16_t));
         }
     }
     return 0;
@@ -244,67 +255,25 @@ static uint8_t ltc6804_get_aux_with_group(const struct ltc6804_platform *platfor
  * @param  size [description]
  * @return      [description]
  */
-uint16_t ltc6804_1_get_voltage(const struct ltc6804_platform *platform, uint16_t *buf, uint16_t size) {
+uint8_t ltc6804_1_get_voltage(struct ltc6804 *__FAR dev, uint16_t *buf, uint8_t size) {
     uint8_t count = 0;
     uint8_t i;
-    uint16_t ret;
-    uint8_t index;
-    uint8_t offset;
-    struct ltc6804CV cv;
-    for (index = 0; index < 4; index++) {
-        if (size <= 0) {
-            break;
-        }
-        ret = ltc6804_get_voltage_with_group(platform, &cv, index);
-        if (ret > 0) {
-            if (size < ret) {
-                ret = (uint8_t)size;
-            }
-            for (i = 0; i < ret; i++) {
-                offset = i * 2;
-                buf[count++] = cv.CVR[offset] + ((uint16_t)cv.CVR[offset + 1] << 8);
-            }
-            size -= ret;
-        } else {
-            break;
-        }
-    }
-    return count;
-}
-
-
-uint8_t ltc6804_get_voltage(const struct ltc6804_platform *platform, uint8_t index, uint16_t *vol) {
-    struct ltc6804CV cv;
     uint8_t ret;
-
-    if (!vol) return 0;
-    ret = ltc6804_get_voltage_with_group(platform, &cv, index / 3);
-    if (ret == 0) return 0;
-    index = (index * 2) % 6;
-
-    *vol =   cv.CVR[index] + (((uint16_t)cv.CVR[index + 1]) << 8);
-    return 1;
-}
-
-
-uint16_t ltc6804_1_get_aux(const struct ltc6804_platform *platform, uint16_t *buf, uint16_t size) {
-    uint8_t count = 0;
-    uint8_t i;
-    uint16_t ret;
     uint8_t index;
     uint8_t offset;
-    struct ltc6804AV av;
+    struct ltc6804_vol_reg *reg = &dev->reg;
     for (index = 0; index < 4; index++) {
         if (size <= 0) {
             break;
         }
-        ret = ltc6804_get_aux_with_group(platform, &av, index);
+        ret = ltc6804_get_voltage_with_group(dev, index);
         if (ret > 0) {
             if (size < ret) {
                 ret = size;
             }
             for (i = 0; i < ret; i++) {
-                buf[count++] = av.AVR[offset] + ((uint16_t)av.AVR[offset + 1] << 8);
+                offset = i * 2;
+                buf[count++] = reg->dat[offset] + ((uint16_t)(reg->dat[offset + 1]) << 8);
             }
             size -= ret;
         } else {
@@ -314,7 +283,51 @@ uint16_t ltc6804_1_get_aux(const struct ltc6804_platform *platform, uint16_t *bu
     return count;
 }
 
-// void ltc6804_test(struct ltc6804 *dev) {
+uint8_t ltc6804_get_voltage(struct ltc6804 *__FAR dev, uint8_t index, uint16_t *vol) {
+    struct ltc6804_vol_reg *reg = &dev->reg;
+
+    if (!vol) return 0;
+    if (0 == ltc6804_get_voltage_with_group(dev, index / 3)) {
+        return 0;
+    }
+
+    index = (index * 2) % 6;
+
+    *vol = reg->dat[index] + ((uint16_t)(reg->dat[index + 1]) << 8);
+    return 1;
+}
+
+uint8_t ltc6804_1_get_aux(struct ltc6804 *__FAR dev, uint16_t *buf, uint8_t size) {
+    uint8_t count = 0;
+    uint8_t i;
+    uint8_t ret;
+    uint8_t index;
+    uint8_t offset;
+    struct ltc6804_vol_reg *reg = &dev->reg;
+
+    for (index = 0; index < 2; index++) {
+        if (size <= 0) {
+            break;
+        }
+
+        ret = ltc6804_get_aux_with_group(dev, index);
+        if (ret > 0) {
+            if (size < ret) {
+                ret = size;
+            }
+            for (i = 0; i < ret; i++) {
+                offset = i * 2;
+                buf[count++] = reg->dat[offset] + ((uint16_t)(reg->dat[offset + 1]) << 8);
+            }
+            size -= ret;
+        } else {
+            break;
+        }
+    }
+    return count;
+}
+
+// void ltc6804_test(struct ltc6804 *__FAR dev) {
 //     uint8_t i;
 //     const uint8_t set_sample[] = {0x03, 0x70, 0xAF, 0x42};
 //     const uint8_t get_voltage[] = {0x00, 0x04, 0x07, 0xC2};
@@ -325,7 +338,7 @@ uint16_t ltc6804_1_get_aux(const struct ltc6804_platform *platform, uint16_t *bu
 
 //     dev->platform->spi_cs(dev, 1);
 //     for (i = 0; i < sizeof(set_sample); i++) {
-//         dev->platform->spi_transmit(dev, set_sample[i]);
+//         dev->platform->spi_transmit_byte(dev, set_sample[i]);
 //     }
 //     dev->platform->spi_cs(dev, 0);
 
@@ -334,10 +347,10 @@ uint16_t ltc6804_1_get_aux(const struct ltc6804_platform *platform, uint16_t *bu
 //     ltc_wake_up(dev);
 //     dev->platform->spi_cs(dev, 1);
 //     for (i = 0; i < sizeof(get_voltage); i++) {
-//         dev->platform->spi_transmit(dev, get_voltage[i]);
+//         dev->platform->spi_transmit_byte(dev, get_voltage[i]);
 //     }
 //     for (i = 0; i < sizeof(recv); i++) {
-//         recv[i] = dev->platform->spi_transmit(dev, 0xFF);
+//         recv[i] = dev->platform->spi_transmit_byte(dev, 0xFF);
 //     }
 
 //     dev->platform->spi_cs(dev, 0);

@@ -1,7 +1,7 @@
 #ifndef __DAC816X_H__
 #define __DAC816X_H__
 
-#include <stdint.h>
+#include "stdint.h"
 
 
 #ifndef __FAR

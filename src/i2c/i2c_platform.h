@@ -16,7 +16,6 @@ struct i2c_operations {
     i2c_init_func init;
     i2c_deinit_func deinit;
     i2c_transmit_func transmit;
-
 };
 
 struct i2c_bus {
