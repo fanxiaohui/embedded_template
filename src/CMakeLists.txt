@@ -17,5 +17,6 @@ add_subdirectory(ringbuffer)
 
 add_library(
     embedded
+    SHARED
     ${SOURCES}
 )

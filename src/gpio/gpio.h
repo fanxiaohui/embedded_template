@@ -16,12 +16,12 @@ enum gpio_mode {
     GPIO_MODE_OUTPUT_OPENDRAIN,
 };
 
-inline uint8_t gpio_init(gpio_ops_t ops, gpio_t io, enum gpio_mode mode);
-inline enum gpio_mode gpio_get_mode(gpio_ops_t ops, gpio_t io);
-inline const char *gpio_mode_to_string(enum gpio_mode moe);
-inline uint8_t gpio_input_is_high(gpio_ops_t ops, gpio_t io);
-inline uint8_t gpio_output_is_high(gpio_ops_t ops, gpio_t io);
-inline uint8_t gpio_set_output(gpio_ops_t ops, gpio_t io, uint8_t is_high);
+uint8_t gpio_init(gpio_ops_t ops, gpio_t io, enum gpio_mode mode);
+enum gpio_mode gpio_get_mode(gpio_ops_t ops, gpio_t io);
+const char *gpio_mode_to_string(enum gpio_mode moe);
+uint8_t gpio_input_is_high(gpio_ops_t ops, gpio_t io);
+uint8_t gpio_output_is_high(gpio_ops_t ops, gpio_t io);
+uint8_t gpio_set_output(gpio_ops_t ops, gpio_t io, uint8_t is_high);
 void gpio_dump(struct gpio_operations const *__FAR ops, void *__FAR io, const char *prefix);
 
 #endif

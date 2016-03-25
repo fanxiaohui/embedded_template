@@ -1,23 +1,23 @@
 #include "spi_platform.h"
 
 
-inline uint8_t spi_init(const struct spi_bus *__FAR bus, uint8_t flags) {
+uint8_t spi_init(const struct spi_bus *__FAR bus, uint8_t flags) {
     return bus->ops->init(bus->private_data, flags);
 }
 
-inline void spi_deinit(spi_bus_t bus) {
+void spi_deinit(spi_bus_t bus) {
     bus->ops->deinit(bus->private_data);
 }
 
-inline uint8_t spi_select(const struct spi_bus *__FAR bus, uint8_t which, uint8_t is_select) {
+uint8_t spi_select(const struct spi_bus *__FAR bus, uint8_t which, uint8_t is_select) {
     return bus->ops->select(bus->private_data, which, is_select);
 }
 
-inline uint8_t spi_transmit_byte(const struct spi_bus *__FAR bus, uint8_t *b) {
+uint8_t spi_transmit_byte(const struct spi_bus *__FAR bus, uint8_t *b) {
     return bus->ops->transmit_byte(bus->private_data, b);
 }
 
-inline uint16_t spi_transfer(const struct spi_bus *__FAR bus, uint8_t *__FAR r, const uint8_t *__FAR w, uint16_t len) {
+uint16_t spi_transfer(const struct spi_bus *__FAR bus, uint8_t *__FAR r, const uint8_t *__FAR w, uint16_t len) {
     return bus->ops->transfer(bus->private_data, r, w, len);
 }
 
