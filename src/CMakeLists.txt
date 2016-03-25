@@ -2,6 +2,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/
     ${CMAKE_CURRENT_SOURCE_DIR}/drivers
     ${CMAKE_CURRENT_SOURCE_DIR}/platform_os
+    ${CMAKE_CURRENT_SOURCE_DIR}/shell
 )
 
 set(SOURCES "")
@@ -13,6 +14,7 @@ add_subdirectory(i2c)
 add_subdirectory(spi)
 add_subdirectory(gpio)
 add_subdirectory(misc)
+add_subdirectory(shell)
 add_subdirectory(ringbuffer)
 
 add_library(
