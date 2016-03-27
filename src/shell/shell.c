@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <stdio.h>
+
 #include "shell_platform.h"
 
 #ifndef SHELL_WELCOM_MESSAGE
@@ -48,7 +49,6 @@ Without arguments it shows a summary of all the shell commands.\n";
 static int shell_func_help(int argc, char **argv);
 
 
-/// shell命令列表的结束标记.
 #define SHELL_COMMAND_END() {(const char *)0, (const char *)0, (const char *)0, (shell_handler)0}
 
 static const struct shell_command buildin_shell_commands[] = {
@@ -240,39 +240,44 @@ void __shell_execute_command(char *cmd) {
 }
 
 
-static void getline(char *buf, int buf_size) {
+static void getline(char *buf, int buf_size, uint8_t echo_on) {
     signed int i;
     int c;
     for (i = 0; i < buf_size - 1;) {
-        c = getchar();
+        c = __getchar();
         if (c == '\b' || c == 0x7F) {
             if (i > 0) {
                 --i;
                 --buf;
-                //putchar('\b');
-                //putchar(' ');
-                //putchar('\b');
+                if (echo_on) {
+                    __putchar('\b');
+                    __putchar(' ');
+                    __putchar('\b');
+                }
             }
             continue;
         }
 
-        if (c == '\n') {
-            //putchar('\n');
+        if (c == 0x0d) {
+            if (echo_on) {
+                __putchar('\n');
+            }
             *buf = 0;
             return;
         }
 
-        //putchar(c);
+        if (echo_on) {
+            __putchar(c);
+        }
+
         *buf++ = (char)c;
         ++i;
     }
-
     *buf = 0;
 }
 
-void shell_loop(void) {
-    char cmd[SHELL_MAXSIZE];
-
+void shell_loop(uint8_t echo_on) {
+    static char cmd[SHELL_MAXSIZE];
 
     (void)printf("\n");
     (void)printf(SHELL_WELCOM_MESSAGE);
@@ -281,7 +286,7 @@ void shell_loop(void) {
     for (;;) {
         (void)printf("[%d]" SHELL_PROMPT, rc);
         (void)fflush(stdout);
-        getline(cmd, sizeof(cmd) - 1);
+        getline(cmd, sizeof(cmd) - 1, echo_on);
         if (strlen(cmd) == 0) {
             continue;
         }
@@ -296,4 +301,3 @@ void shell_execute_command(const char *ccmd) {
     (void)strncpy(cmd, ccmd, sizeof(cmd) - 1);
     __shell_execute_command(cmd);
 }
-
