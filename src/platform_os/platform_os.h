@@ -8,11 +8,11 @@
 #define __ASYNC_PLATFORM_H__
 
 #if defined(__FREERTOS__)
-#include "./platform_freertos.h"
+#include "platform_freertos.h"
 #endif
 
 #if defined(__linux__) || defined(__WIN32__)
-#include "./platform_posix.h"
+#include "platform_posix.h"
 #endif
 
 #if defined(__UCOS__)

@@ -5,60 +5,23 @@
 
 #include "shell_platform.h"
 
-#ifndef SHELL_WELCOM_MESSAGE
-#define SHELL_WELCOM_MESSAGE     "Hello, this is a shell."
-#endif
-
-#ifndef SHELL_PROMPT
-#define SHELL_PROMPT              "SHELL> "
-#endif
+extern const char *const shell_wellcome_message;
+extern const char *const shell_prompt;
+extern const struct shell_command shell_commands[];
 
 #define SHELL_MAXSIZE             50
-#define SHELL_ERRMSG              "Invalid command, type 'help' for help\n"
 #define SHELL_ALT_SPACE           '\x07'
 #define SHELL_MAX_ARGS            10
 
 
-static int rc = 0;
+#if SHELL_SUPPORT_HELP
 
-//static void shellh_not_implemented_handler(int argc, char **argv) {
-//    (void)argc;
-//   (void)argv;
-//    printf(SHELL_ERRMSG);
-//}
-
-static void shellh_show_help(const char *cmd, const char *helptext) {
-    (void)printf("Usage: %s %s", cmd, helptext);
-}
-
-static const char shell_summary_exit[] = "exit the shell";
-static const char shell_help_exit[] = "\nExits the shell.\n";
-static int shell_func_exit(int argc, char **argv) {
-    (void)argc;
-    (void)argv;
-    (void)printf("byte ...\n");
-    return 0;
-}
-
-static const char shell_summary_help[] = "shell help";
-static const char shell_help_help[] = "\
+const char shell_summary_help[] = "shell help";
+const char shell_help_help[] = "\
 [<command>]\n\
     [<command>] - the command to get help on.\n\
-Without arguments it shows a summary of all the shell commands.\n";
-
-static int shell_func_help(int argc, char **argv);
-
-
-#define SHELL_COMMAND_END() {(const char *)0, (const char *)0, (const char *)0, (shell_handler)0}
-
-static const struct shell_command buildin_shell_commands[] = {
-#ifdef SHELL_COMMAND_CUSTOM_LIST
-    SHELL_COMMAND_CUSTOM_LIST
-#endif
-    SHELL_COMMAND("help", help),
-    SHELL_COMMAND("exit", exit),
-    SHELL_COMMAND_END(),
-};
+Without arguments it shows a summary of all the shell commands.\n\
+";
 
 static void shell_list_summary_help(const struct shell_command *cmds) {
     const struct shell_command *__FAR pcmd;
@@ -67,7 +30,6 @@ static void shell_list_summary_help(const struct shell_command *cmds) {
             (void)printf("  %-6s - %s\n", pcmd->cmd, pcmd->summary);
         }
     }
-
     (void)printf("\nhelp <command> for more information of the command.\n\n");
 }
 
@@ -86,20 +48,19 @@ static const struct shell_command *shell_detail_help(const struct shell_command 
     return NULL;
 }
 
-
-static int shell_func_help(int argc, char **argv) {
+int shell_func_help(int argc, char **argv) {
     if (argc > 2) {
-        shellh_show_help(argv[0], shell_help_help);
+        (void)printf("Usage: %s %s", argv[0], shell_help_help);
         return -1;
     }
 
     if (argc == 1) {
         (void)printf("Shell commands:\n");
-        shell_list_summary_help(buildin_shell_commands);
+        shell_list_summary_help(shell_commands);
         return 0;
     }
 
-    if (NULL != shell_detail_help(buildin_shell_commands, argv[1])) {
+    if (NULL != shell_detail_help(shell_commands, argv[1])) {
         return 0;
     }
 
@@ -108,18 +69,22 @@ static int shell_func_help(int argc, char **argv) {
     return -2;
 }
 
-static const struct shell_command *shell_execute_command_in_commands(const struct shell_command *cmds, int argc, char **argv) {
+#endif
+
+static char shell_execute_command_in_commands(const struct shell_command *cmds, int argc, char **argv) {
     const struct shell_command *pcmd;
     for (pcmd = cmds; pcmd->cmd != NULL; ++pcmd) {
         if (!strcmp(pcmd->cmd, argv[0])) {
-            rc = pcmd->handler(argc, argv);
-            return pcmd;
+            return (char)pcmd->handler(argc, argv);
         }
     }
-    return NULL;
+
+
+    (void)printf("Command \"%s\" cannot be found.\n", argv[0]);
+    return -128;
 }
 
-void __shell_execute_command(char *cmd) {
+char shell_execute_command(char *cmd, int rc) {
     char *p, *temp;
     int i, inside_quotes;
     char quote_char;
@@ -127,7 +92,7 @@ void __shell_execute_command(char *cmd) {
     char *argv[ SHELL_MAX_ARGS ];
 
     if (strlen(cmd) == 0) {
-        return;
+        return rc;
     }
 
     if (cmd[ strlen(cmd) - 1 ] != '\n') {
@@ -162,8 +127,8 @@ void __shell_execute_command(char *cmd) {
             cmd[ i ] = SHELL_ALT_SPACE;
         }
     if (inside_quotes) {
-        (void)printf("Invalid quoted string\n");
-        return;
+        //(void)printf("Invalid quoted string\n");
+        return -126;
     }
 
     // Transform consecutive sequences of spaces into a single space
@@ -176,7 +141,7 @@ void __shell_execute_command(char *cmd) {
         p = strchr(p + 1, ' ');
     }
     if (!strcmp(cmd, " ")) {
-        return;
+        return rc;
     }
 
     // Skip over the initial space char if it exists
@@ -195,15 +160,14 @@ void __shell_execute_command(char *cmd) {
         argv[ argc ] = NULL;
     }
     argc = 0;
-    for (;;) {
+    while (1) {
         temp = strchr(p, ' ');
         if (temp == NULL) {
             break;
         }
-
         *temp = 0;
         if (argc == SHELL_MAX_ARGS) {
-            (void)printf("Error: too many arguments\n");
+            //(void)printf("Error: too many arguments\n");
             argc = -1;
             break;
         }
@@ -212,7 +176,7 @@ void __shell_execute_command(char *cmd) {
     }
 
     if (argc == -1) {
-        return;
+        return -124;
     }
 
     // Additional argument processing happens here
@@ -231,73 +195,49 @@ void __shell_execute_command(char *cmd) {
         }
     }
 
-    if (NULL != shell_execute_command_in_commands(buildin_shell_commands, argc, argv)) {
-        return;
-    }
-
-
-    (void)printf("Command \"%s\" cannot be found.\n", argv[0]);
+    return shell_execute_command_in_commands(shell_commands, argc, argv);
 }
 
 
-static void getline(char *buf, int buf_size, uint8_t echo_on) {
+static void getline(char *buf, int buf_size) {
     signed int i;
     int c;
     for (i = 0; i < buf_size - 1;) {
-        c = __getchar();
+        c = getchar();
         if (c == '\b' || c == 0x7F) {
             if (i > 0) {
                 --i;
                 --buf;
-                if (echo_on) {
-                    __putchar('\b');
-                    __putchar(' ');
-                    __putchar('\b');
-                }
             }
             continue;
         }
 
-        if (c == 0x0d) {
-            if (echo_on) {
-                __putchar('\n');
-            }
+        if (c == '\r' || c == '\n') {
             *buf = 0;
-            return;
+            if (i > 0) {
+                return;
+            }
         }
-
-        if (echo_on) {
-            __putchar(c);
-        }
-
         *buf++ = (char)c;
         ++i;
     }
+
     *buf = 0;
 }
 
-void shell_loop(uint8_t echo_on) {
-    static char cmd[SHELL_MAXSIZE];
+void shell_loop(void) {
+    int rc = 0;
+    char cmd[SHELL_MAXSIZE] = {0};
 
     (void)printf("\n");
-    (void)printf(SHELL_WELCOM_MESSAGE);
+    (void)printf(shell_wellcome_message);
     (void)printf("\n");
 
     for (;;) {
-        (void)printf("[%d]" SHELL_PROMPT, rc);
-        (void)fflush(stdout);
-        getline(cmd, sizeof(cmd) - 1, echo_on);
-        if (strlen(cmd) == 0) {
-            continue;
-        }
-        __shell_execute_command(cmd);
+        (void)printf("[%d]%s# ", rc, shell_prompt);
+        fflush(stdout);
+        getline(cmd, sizeof(cmd) - 1);
+        rc = shell_execute_command(cmd, rc);
     }
 }
 
-
-void shell_execute_command(const char *ccmd) {
-    char cmd[SHELL_MAXSIZE];
-    (void)memset(cmd, 0, sizeof(cmd));
-    (void)strncpy(cmd, ccmd, sizeof(cmd) - 1);
-    __shell_execute_command(cmd);
-}

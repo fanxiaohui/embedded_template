@@ -8,29 +8,30 @@
 #include <math.h>
 #include <time.h>
 
-typedef sem_t *async_sem_t;
-typedef pthread_mutex_t *async_mutex_t;
-typedef uint32_t async_time_t;
+typedef sem_t *os_sem_t;
+typedef pthread_mutex_t *os_mutex_t;
+typedef uint32_t os_time_t;
+#define OS_TIME_FOREVER ((os_time_t)0xFFFFFFFF)
 
-#define ASYNC_TIME_FOREVER ((async_time_t)(0xFFFFFFFF))
+#define ASYNC_TIME_FOREVER ((os_time_t)(0xFFFFFFFF))
 
 extern struct timespec otime;
 
-static inline void async_platform_init(void) {
+static inline void os_platform_init(void) {
     clock_gettime(CLOCK_REALTIME, &otime);
 }
 
-static inline async_sem_t async_create_sem(void) {
+static inline os_sem_t os_create_sem(void) {
     static sem_t sem;
     sem_init(&sem, 0, 0);
     return &sem;
 }
 
-static inline char async_post_sem(async_sem_t sem) {
+static inline char os_post_sem(os_sem_t sem) {
     return 0 == sem_post(sem);
 }
 
-static inline char async_pend_sem(async_sem_t sem, async_time_t timeout) {
+static inline char os_pend_sem(os_sem_t sem, os_time_t timeout) {
     struct timespec to;
 
     clock_gettime(CLOCK_REALTIME, &to);
@@ -47,25 +48,35 @@ static inline char async_pend_sem(async_sem_t sem, async_time_t timeout) {
 }
 
 
-static inline void async_clear_sem(async_sem_t sem) {
+static inline void os_clear_sem(os_sem_t sem) {
     sem_init(sem, 0, 0);
 }
 
 
-static inline async_mutex_t async_create_mutex(void) {
+static inline os_mutex_t os_create_mutex(void) {
     static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
     return &mutex;
 }
 
-static inline void async_lock_mutex(async_mutex_t mutex) {
+static inline void os_lock_mutex(os_mutex_t mutex) {
     pthread_mutex_lock(mutex);
 }
 
-static inline void async_unlock_mutex(async_mutex_t mutex) {
+static inline void os_unlock_mutex(os_mutex_t mutex) {
     pthread_mutex_unlock(mutex);
 }
+#if defined(__WIN32__)
+#include "Windows.h"
+#endif
+static inline void os_sleep(os_time_t t) {
+#if defined(__WIN32__)
+    Sleep(t);
+#else
+    sleep(t);
+#endif
+}
 
-static inline async_time_t async_get_time(void) {
+static inline os_time_t os_get_time(void) {
     struct timespec spec;
     clock_gettime(CLOCK_REALTIME, &spec);
 
@@ -83,11 +94,13 @@ static inline async_time_t async_get_time(void) {
     return msec;
 }
 
-static inline void async_destroy_sem(async_sem_t sem) {
+static inline void os_destroy_sem(os_sem_t sem) {
 }
 
-
-static inline void async_destroy_mutex(async_mutex_t mutex) {
+static inline void os_destroy_mutex(os_mutex_t mutex) {
 }
+
+#define OS_CRITICAL(block) do { block } while(0)
+
 
 #endif
