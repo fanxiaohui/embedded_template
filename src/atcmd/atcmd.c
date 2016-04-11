@@ -3,19 +3,19 @@
 #include "string.h"
 #include "stdio.h"
 
+#define dprintf printf
 
 static void send_string(atcmd_t atcmd, const char *s) {
-    atcmd->iface->send((const unsigned char *)s, strlen(s));
+    atcmd->send((const unsigned char *)s, strlen(s));
 }
 
 static void send_byte(atcmd_t atcmd, uint8_t b) {
-    atcmd->iface->send(&b, 1);
+    atcmd->send(&b, 1);
 }
 
-static void send_bytes(atcmd_t atcmd, const uint8_t *s, uint16_t len) {
-    atcmd->iface->send(s, len);
+static void send_bytes(atcmd_t atcmd, const uint8_t *s, uint16_t size) {
+    atcmd->send(s, size);
 }
-
 
 static void clear_recv_buffer(atcmd_t atcmd) {
     OS_CRITICAL(
@@ -24,7 +24,6 @@ static void clear_recv_buffer(atcmd_t atcmd) {
     os_clear_sem(atcmd->sem);
 }
 
-
 static uint8_t expect(atcmd_t atcmd, const struct atcmd_expect *exp, os_time_t ms) {
     RINGBUFFER_SIZE_TYPE size;
     uint8_t rc;
@@ -32,10 +31,10 @@ static uint8_t expect(atcmd_t atcmd, const struct atcmd_expect *exp, os_time_t m
     os_time_t now = os_get_time();
     os_time_t end = now + ms;
 
-    //dprintf("[AT]: Wait for event with %d ticks timeout\n", timeoutTick);
-
     for (; now < end; now = os_get_time()) {
+        // dprintf("[AT][T%d]: wait for reply\n", os_get_time());
         if (0 == os_pend_sem(atcmd->sem, end - now)) {
+            // dprintf("[AT][T%d]: wait for reply timeout\n", os_get_time());
             return 0;
         }
 
@@ -54,16 +53,13 @@ static uint8_t expect(atcmd_t atcmd, const struct atcmd_expect *exp, os_time_t m
     return 0;
 }
 
-void atcmd_init(atcmd_t atcmd, uint8_t *buff, uint8_t buff_size, const struct atcmd_interface *iface) {
-    //ASSERT(atcmd);
-    atcmd->iface = iface;
-    atcmd->iface->init();
+void atcmd_init(atcmd_t atcmd, uint8_t *buff, uint8_t buff_size, void (*send)(const uint8_t *dat, uint16_t size)) {
+    atcmd->send = send;
     ringbuffer_init(&atcmd->rb, buff, buff_size);
     atcmd->sem = os_create_sem();
 }
 
 void atcmd_recv_line(atcmd_t atcmd, const char *line, uint8_t size) {
-    //ASSERT(atcmd);
     printf("ATCMD<- %s\n", line);
     OS_CRITICAL(
         (void)ringbuffer_write(&atcmd->rb, line, size);
@@ -105,7 +101,7 @@ uint8_t atcmd_retry_until_reply(atcmd_t atcmd, const char *cmd, const char *repl
 }
 
 
-uint8_t atmc_retry_until_replys(atcmd_t atcmd, const char *cmd, const char *const *replys, os_time_t ms, uint8_t times) {
+uint8_t atcmd_retry_until_replys(atcmd_t atcmd, const char *cmd, const char *const *replys, os_time_t ms, uint8_t times) {
     struct atcmd_expect exp;
     char buf[24];
 
@@ -136,23 +132,21 @@ uint8_t atmc_retry_until_replys(atcmd_t atcmd, const char *cmd, const char *cons
 
 uint8_t atcmd_get_ccid(atcmd_t atcmd, char *buf, uint8_t len) {
     uint8_t i;
-
     struct atcmd_expect exp;
+    volatile os_time_t now = os_get_time();
+    os_time_t end = now + 1000;
+
     exp.expect = "";
     exp.recv_buff = buf;
     exp.buff_size = len;
 
-    for (i = 0; i < 5; ++i) {
-        volatile os_time_t now;
-        os_time_t end = os_get_time() + 1000;
-        (void)atcmd_exec_command(atcmd, "AT+QCCID", NULL, 0);
-        for (now = os_get_time(); now < end;  now = os_get_time()) {
-            if (!atcmd_exec_command(atcmd, NULL, &exp, end - now)) {
-                continue;
-            }
-            if (strlen(buf)>18 && strlen(buf)<30) {
-                return 1;
-            }
+    (void)atcmd_exec_command(atcmd, "AT+QCCID", NULL, 0);
+    for (; now < end;  now = os_get_time()) {
+        if (!atcmd_exec_command(atcmd, NULL, &exp, end - now)) {
+            continue;
+        }
+        if (strlen(buf) > 18 && strlen(buf) < 30) {
+            return 1;
         }
     }
 
@@ -162,26 +156,24 @@ uint8_t atcmd_get_ccid(atcmd_t atcmd, char *buf, uint8_t len) {
 
 uint8_t atcmd_get_imei(atcmd_t atcmd, char *buf, uint8_t len) {
     uint8_t i;
-
     struct atcmd_expect exp;
+    volatile os_time_t now = os_get_time();
+    os_time_t end = now + 1000;
+
     exp.expect = "";
     exp.recv_buff = buf;
     exp.buff_size = len;
 
-    for (i = 0; i < 5; ++i) {
-        volatile os_time_t now;
-        os_time_t end = os_get_time() + 1000;
-        (void)atcmd_exec_command(atcmd, "AT+GSN", NULL, 0);
-        for (now = os_get_time(); now < end;  now = os_get_time()) {
-            if (!atcmd_exec_command(atcmd, NULL, &exp, end - now)) {
-                continue;
-            }
-            if (strlen(buf)>12 && strlen(buf)<30) {
-                return 1;
-            }
+    (void)atcmd_exec_command(atcmd, "AT+GSN", NULL, 0);
+    for (; now < end;  now = os_get_time()) {
+        memset(buf, 0, len);
+        if (!atcmd_exec_command(atcmd, NULL, &exp, end - now)) {
+            continue;
+        }
+        if (strlen(buf) > 12 && strlen(buf) < 30) {
+            return 1;
         }
     }
-
     return 0;
 }
 
@@ -262,13 +254,13 @@ uint8_t atcmd_send_tcp_cb(atcmd_t atcmd, void *private_data, cb_get_send_data cb
 
     exp.expect = "";
     exp.recv_buff = buf;
-    exp.buff_size = sizeof(buf);    
-        
-    while(sent < total_len) {
+    exp.buff_size = sizeof(buf);
+
+    while (sent < total_len) {
         uint16_t this_len = total_len - sent;
         if (this_len > 1320) {
             this_len = 1320;
-        }        
+        }
         sent += this_len;
 
         (void)sprintf((char *)buf, "AT+QISEND=%d", this_len);
@@ -309,51 +301,6 @@ uint8_t atcmd_send_tcp_cb(atcmd_t atcmd, void *private_data, cb_get_send_data cb
 
     return 1;
 }
-
-
-// Bool ATCMD_SendDataViaGPRS(const unsigned char *__FAR dat, INT16U len) {
-//     ATCMD_Expect expect;
-//     char buf[20];
-//     INT16S t;
-//     INT32U n;
-
-//     if (!dat || len <= 0) {
-//         return 0;
-//     }
-
-//     expect.expect = "";
-//     expect.recvBuffer = buf;
-//     expect.recvLen = sizeof(buf);
-
-//     (void)sprintf((char *)buf, "AT+QISEND=%d", len);
-
-//     atcmd_ClearReply();
-//     (void)ATCMD_ExecCommand((char *)buf, NULL, OS_TICKS_PER_SEC / 4);
-//     atcmd_SendBytes((unsigned char *__FAR)dat, len);
-
-//     t = OS_TICKS_PER_SEC;
-//     n = os_get_time() + t;
-//     do {
-//         if (ATCMD_ExecCommand(NULL, &expect, t)) {
-//             return 0;
-//         }
-
-//         if (strcmp("SEND OK", (char *)buf) == 0) {
-//             return 1;
-//         }
-//         if (strcmp("SEND FAIL", (char *)buf) == 0) {
-//             return 0;
-//         }
-//         if (strcmp("ERROR", (char *)buf) == 0) {
-//             return 0;
-//         }
-
-//         t = (INT16U)((INT32U)(n - os_get_time()));
-
-//     } while (t > 0);
-
-//     return 0;
-// }
 
 static long atoi_skip_bank_prefix(const char *s) {
     long ret = 0;
@@ -401,13 +348,15 @@ uint8_t atcmd_get_signal_quality(atcmd_t atcmd, uint8_t *rssi, uint8_t *ber) {
     if (this_ber > 7 && this_ber != 99) {
         return 0;
     }
-    // dprintf("[ATCMD] Signal quality %d:%d\n", this_rssi, this_ber);
+
     if (rssi) {
         *rssi = this_rssi;
     }
+
     if (ber) {
         *ber = this_ber;
     }
+
     return 1;
 }
 
@@ -473,8 +422,6 @@ uint8_t atcmd_get_ops(atcmd_t atcmd, char *buf, uint8_t len) {
     exp.buff_size = len;
 
     if (!atcmd_exec_command(atcmd, "AT+COPS?", &exp, 1000)) {
-        return 0;
-    } else {
         char *ops = strchr(buf, '\"');
         if (!ops) {
             return 0;
@@ -487,6 +434,8 @@ uint8_t atcmd_get_ops(atcmd_t atcmd, char *buf, uint8_t len) {
         *buf = 0;
         return 1;
     }
+
+    return 0;
 }
 
 uint8_t atcmd_get_lacci(atcmd_t atcmd, uint16_t lac_ci[2]) {
@@ -496,13 +445,12 @@ uint8_t atcmd_get_lacci(atcmd_t atcmd, uint16_t lac_ci[2]) {
     if (!lac_ci) {
         return 0;
     }
+
     exp.expect = "+CREG:";
     exp.recv_buff = buf;
     exp.buff_size = sizeof(buf);
 
-    if (!atcmd_exec_command(atcmd, "AT+CREG?", &exp, 1000)) {
-        return 0;
-    } else {
+    if (atcmd_exec_command(atcmd, "AT+CREG?", &exp, 1000)) {
         char *ops = strchr(buf, '\"');
         if (!ops) {
             return 0;
@@ -521,8 +469,9 @@ uint8_t atcmd_get_lacci(atcmd_t atcmd, uint16_t lac_ci[2]) {
         if (!ops || *ops != '\"') {
             return 0;
         }
-
         return 1;
     }
+
+    return 0;
 }
 

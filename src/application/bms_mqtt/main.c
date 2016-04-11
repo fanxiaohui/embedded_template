@@ -1,4 +1,4 @@
-#include "atcmd_platform.h"
+#include "dtu_m35_platform.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -7,7 +7,6 @@
 #include "platform_os.h"
 #include <windows.h>
 
-static struct atcmd atcmd;
 static uint8_t recv_buff[128];
 
 static HANDLE uart = INVALID_HANDLE_VALUE;
@@ -59,44 +58,69 @@ int uart_recv(uint8_t *buffer, uint32_t size) {
     return dwRead;
 }
 
+
+static void *uart_recv_thread(void *p);
+
+
+static void m35_platform_init(void) {
+    uart_init();
+    pthread_t tid;
+    int ret;
+    if ((ret = pthread_create(&tid, NULL, uart_recv_thread, NULL)) != 0) {
+        fprintf(stderr, "pthread create: %s\n", strerror(ret));
+        exit(-1);
+    }
+}
+
+static void m35_platform_power_enable(uint8_t is_enable) {
+}
+
+static void m35_platform_power_key(uint8_t is_assert) {
+
+}
+
+static void m35_platform_serial_send(const uint8_t *dat, uint16_t len) {
+    uint32_t dwSize;
+    if (uart == INVALID_HANDLE_VALUE) return;
+    WriteFile(uart, dat, len, (LPDWORD)&dwSize, NULL);
+}
+
+static uint8_t m35_is_poweron(void) {
+    return 1;
+}
+
+const struct dtu_m35_platform dtu_m35_platform = {
+    .init = m35_platform_init,
+    .is_poweron = m35_is_poweron,
+    .power_enable = m35_platform_power_enable,
+    .power_key = m35_platform_power_key,
+    .serial_send = m35_platform_serial_send,
+};
+
+struct dtu_m35 m35;
+
 static void *uart_recv_thread(void *p) {
     static uint8_t buff[200];
     static uint8_t index = 0;
     uint8_t b;
     while (1) {
         while (1 != uart_recv(&b, 1));
-        if (b == '\n') {
-            buff[index] = 0;
-            atcmd_recv_line(&atcmd, buff, index);
-            index = 0;
-            continue;
-        }
-
-        if (b != '\r' && index < (sizeof(buff) - 1)) {
-            buff[index++] = b;
-        }
+        dtum35_recv_byte(&m35, b);
     }
 }
 
+
+
 int main(int argc, char **argv) {
-    pthread_t tid;
     static uint8_t buff[50];
-    int ret;
 
-    uart_init();
+    os_platform_init();
 
-    atcmd_init(&atcmd, recv_buff, sizeof(recv_buff), uart_send);
-
-    if ((ret = pthread_create(&tid, NULL, uart_recv_thread, NULL)) != 0) {
-        fprintf(stderr, "pthread create: %s\n", strerror(ret));
-        exit(-1);
-    }
-
-    atcmd_retry_until_reply(&atcmd, "ATE0", "OK", 500, 5);
-    while (1) {
-        os_sleep(1000);
-        atcmd_get_imei(&atcmd, buff, sizeof(buff));
-        printf("imei: %s\n", buff);
-    }
+    dtum35_init(&m35, &dtu_m35_platform);
+    os_sleep(100);
+    //atcmd_retry_until_reply(&m35.atcmd, "ATE0", "OK", 500, 5);
+    //while (1) {
+    //}
+    dtum35_run(&m35);
 }
 

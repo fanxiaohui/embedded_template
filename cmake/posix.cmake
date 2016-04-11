@@ -1,0 +1,1 @@
+set(CMAKE_C_FLAGS "-D__FAR=\"\" -DSHELL_SUPPORT_HELP=1")

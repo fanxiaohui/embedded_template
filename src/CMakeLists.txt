@@ -5,6 +5,7 @@ include_directories(
     ${CMAKE_CURRENT_SOURCE_DIR}/shell
     ${CMAKE_CURRENT_SOURCE_DIR}/ringbuffer
     ${CMAKE_CURRENT_SOURCE_DIR}/atcmd
+    ${CMAKE_CURRENT_SOURCE_DIR}/misc
 )
 
 set(SOURCES "")
@@ -27,5 +28,5 @@ add_library(
     ${SOURCES}
 )
 
-
 add_subdirectory(example)
+add_subdirectory(application)

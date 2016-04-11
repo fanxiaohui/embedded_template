@@ -6,7 +6,7 @@
 #include "platform_os.h"
 
 struct atcmd {
-    const struct atcmd_interface *iface;
+    void (*send)(const uint8_t *dat, uint16_t size);
     struct ringbuffer rb;
     os_sem_t sem;
 };

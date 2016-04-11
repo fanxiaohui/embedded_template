@@ -16,15 +16,21 @@ typedef uint32_t os_time_t;
 #define ASYNC_TIME_FOREVER ((os_time_t)(0xFFFFFFFF))
 
 extern struct timespec otime;
-
-static inline void os_platform_init(void) {
-    clock_gettime(CLOCK_REALTIME, &otime);
-}
+extern os_mutex_t critical_mutex;
 
 static inline os_sem_t os_create_sem(void) {
-    static sem_t sem;
-    sem_init(&sem, 0, 0);
-    return &sem;
+    static sem_t sem[100];
+    static char used[100];
+
+    int i;
+    for (i = 0; i < sizeof(sem)/sizeof(sem[0]); ++i) {
+        if (!used[i]) {
+            used[i] = 1;
+            sem_init(&sem[i], 0, 0);
+            return &sem[i];
+        }
+    }
+    return NULL;
 }
 
 static inline char os_post_sem(os_sem_t sem) {
@@ -33,7 +39,6 @@ static inline char os_post_sem(os_sem_t sem) {
 
 static inline char os_pend_sem(os_sem_t sem, os_time_t timeout) {
     struct timespec to;
-
     clock_gettime(CLOCK_REALTIME, &to);
 
     to.tv_nsec += (timeout % 1000) * 1e6;
@@ -54,8 +59,18 @@ static inline void os_clear_sem(os_sem_t sem) {
 
 
 static inline os_mutex_t os_create_mutex(void) {
-    static pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
-    return &mutex;
+    static pthread_mutex_t mutex[100];
+    static char used[100];
+    int i;
+
+    for (i = 0; i < sizeof(mutex)/ sizeof(mutex[0]); ++i) {
+        if (!used[i]) {
+            used[i] = 1;
+            mutex[i] = PTHREAD_MUTEX_INITIALIZER;
+            return &mutex[i];
+        }
+    }
+    return NULL;
 }
 
 static inline void os_lock_mutex(os_mutex_t mutex) {
@@ -100,7 +115,18 @@ static inline void os_destroy_sem(os_sem_t sem) {
 static inline void os_destroy_mutex(os_mutex_t mutex) {
 }
 
-#define OS_CRITICAL(block) do { block } while(0)
+
+static inline void os_platform_init(void) {
+    clock_gettime(CLOCK_REALTIME, &otime);
+    critical_mutex = os_create_mutex();
+}
+
+
+#define OS_CRITICAL(block) do { \
+    os_lock_mutex(critical_mutex); \
+    do { block } while(0); \
+    os_unlock_mutex(critical_mutex); \
+} while(0)
 
 
 #endif
