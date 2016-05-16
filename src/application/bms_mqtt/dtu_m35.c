@@ -5,6 +5,11 @@
 #define dprintf printf
 
 
+static void recv_at_default(struct dtu_m35 *m35, unsigned char b);
+static void recv_ipd_data(struct dtu_m35 *m35, unsigned char b);
+static void recv_cmt_data(struct dtu_m35 *m35, unsigned char b);
+
+
 static void recv_at_default(struct dtu_m35 *m35, unsigned char b) {
     if (b == '\n') {
         if (m35->recv_line_index < 2) {
@@ -31,10 +36,8 @@ static void recv_at_default(struct dtu_m35 *m35, unsigned char b) {
         if (memcmp(m35->recv_line_buff, "IPD", 3) != 0) {
             return;
         }
-        // GOT "IPD" header, enter IPD recv flow.
-        // dataLen = 0;
-        //recvByte = recvByte_RECV_IPD_LENGTH;
-        //tickEnterRecvAtReply = OSTimeGet() + OS_TICKS_PER_SEC;
+        m35->fsm_recv_byte = recv_ipd_data;
+        m35->time_recv_default = os_get_time() + 50;
         return;
     }
 
@@ -42,13 +45,20 @@ static void recv_at_default(struct dtu_m35 *m35, unsigned char b) {
         if (memcmp(m35->recv_line_buff, "+CMT:", 5) != 0) {
             return;
         }
-        // GOT "+CMT" header, enter CMT recv flow.
-        // dataLen = 0;
-        //recvByte = recvByte_RECV_CMT_NUM_PRE_QUOTE;
-        //tickEnterRecvAtReply = OSTimeGet() + OS_TICKS_PER_SEC * 3 / 2;
+        m35->fsm_recv_byte = recv_cmt_data;
+        m35->time_recv_default = os_get_time() + 50;
         return;
     }
 }
+
+static void recv_ipd_data(struct dtu_m35 *m35, unsigned char b) {
+        m35->time_recv_default = os_get_time() + 50;
+}
+
+static void recv_cmt_data(struct dtu_m35 *m35, unsigned char b) {
+        m35->time_recv_default = os_get_time() + 50;
+}
+
 
 static uint8_t start_and_config_modem(struct dtu_m35 *m35) {
     RUNTIME_STATUS_SET(m35, DTUM35_RUNTIME_STATUS_POWERUP);
@@ -252,28 +262,19 @@ void dtum35_recv_byte(struct dtu_m35 *m35, uint8_t b) {
 
 uint8_t dtum35_run(struct dtu_m35 *m35) {
     while (1) {
-        dprintf(__FILE__ "[%d]\n", __LINE__);
         if (!start_and_config_modem(m35)) goto __need_restart;
         while (1) {
-            dprintf(__FILE__ "[%d]\n", __LINE__);
             update_ops(m35);
-            dprintf(__FILE__ "[%d]\n", __LINE__);
             update_imei(m35);
-            dprintf(__FILE__ "[%d]\n", __LINE__);
             update_ccid(m35);
-            dprintf(__FILE__ "[%d]\n", __LINE__);
             update_signal_quality(m35);
-            dprintf(__FILE__ "[%d]\n", __LINE__);
             update_lacci(m35);
-            dprintf(__FILE__ "[%d]\n", __LINE__);
             update_data_send_info(m35);
-            os_sleep(1000);
+            os_sleep(10);
         }
 __need_restart:
-        dprintf(__FILE__ "[%d]\n", __LINE__);
         RUNTIME_STATUS_SET(m35, DTUM35_RUNTIME_STATUS_DELAT_TO_RESTART);
         stop_modem(m35);
-        dprintf(__FILE__ "[%d]\n", __LINE__);
         wait_to_restart(m35);
     }
 }

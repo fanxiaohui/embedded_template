@@ -193,7 +193,7 @@ char ringbuffer_read_string_and_is_with_prefix(ringbuffer_t rb, const char *__FA
         *size = ringbuffer_read_string(rb, buf, *size);
         return (*size  > 0);
     } else {
-        char chr;
+        char chr = 1;
         const char *__FAR pe;
         RINGBUFFER_SIZE_TYPE saved = 0;
 

@@ -113,9 +113,8 @@ static void *uart_recv_thread(void *p) {
 
 int main(int argc, char **argv) {
     static uint8_t buff[50];
-
+    //printf("hello\n");
     os_platform_init();
-
     dtum35_init(&m35, &dtu_m35_platform);
     os_sleep(100);
     //atcmd_retry_until_reply(&m35.atcmd, "ATE0", "OK", 500, 5);

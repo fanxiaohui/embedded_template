@@ -3,7 +3,9 @@
 #include "string.h"
 #include "stdio.h"
 
-#define dprintf printf
+#define DEBUG_LEVEL DEBUG_LEVEL_TRACE
+
+#include "debug.h"
 
 static void send_string(atcmd_t atcmd, const char *s) {
     atcmd->send((const unsigned char *)s, strlen(s));
@@ -32,9 +34,9 @@ static uint8_t expect(atcmd_t atcmd, const struct atcmd_expect *exp, os_time_t m
     os_time_t end = now + ms;
 
     for (; now < end; now = os_get_time()) {
-        // dprintf("[AT][T%d]: wait for reply\n", os_get_time());
+        dprintf(DEBUG_LEVEL_DEBUG, "wait for reply\n");
         if (0 == os_pend_sem(atcmd->sem, end - now)) {
-            // dprintf("[AT][T%d]: wait for reply timeout\n", os_get_time());
+            dprintf(DEBUG_LEVEL_DEBUG, "wait for reply timeout\n");
             return 0;
         }
 
@@ -47,6 +49,7 @@ static uint8_t expect(atcmd_t atcmd, const struct atcmd_expect *exp, os_time_t m
                       &size);
         );
         if (rc) {
+            dprintf(DEBUG_LEVEL_DEBUG, "get reply \"%s\"\n", exp->recv_buff);
             return 1;
         }
     }
@@ -60,7 +63,7 @@ void atcmd_init(atcmd_t atcmd, uint8_t *buff, uint8_t buff_size, void (*send)(co
 }
 
 void atcmd_recv_line(atcmd_t atcmd, const char *line, uint8_t size) {
-    printf("ATCMD<- %s\n", line);
+    dprintf(DEBUG_LEVEL_DEBUG, "ATCMD<- [%d]%s\n", size, line);
     OS_CRITICAL(
         (void)ringbuffer_write(&atcmd->rb, line, size);
     );
@@ -70,7 +73,7 @@ void atcmd_recv_line(atcmd_t atcmd, const char *line, uint8_t size) {
 uint8_t atcmd_exec_command(atcmd_t atcmd, const char *cmd, const struct atcmd_expect *exp, os_time_t ms) {
     if (cmd != NULL) {
         clear_recv_buffer(atcmd);
-        printf("ATCMD-> %s\n", cmd);
+        dprintf(DEBUG_LEVEL_DEBUG, "ATCMD-> %s\n", cmd);
         send_string(atcmd, cmd);
         if (*cmd) {
             send_byte(atcmd, '\r');
@@ -145,7 +148,7 @@ uint8_t atcmd_get_ccid(atcmd_t atcmd, char *buf, uint8_t len) {
         if (!atcmd_exec_command(atcmd, NULL, &exp, end - now)) {
             continue;
         }
-        if (strlen(buf) > 18 && strlen(buf) < 30) {
+        if (strlen(buf) > 18 && strlen(buf) <= 21) {
             return 1;
         }
     }
