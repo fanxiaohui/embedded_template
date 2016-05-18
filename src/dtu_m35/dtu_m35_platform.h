@@ -16,24 +16,20 @@ struct dtu_m35 {
     const struct dtu_m35_platform *platform;
     struct atcmd atcmd;
     uint8_t atcmd_buff[100];
-
-    char recv_line_buff[100];
+    uint8_t ipd_buff[200];
     uint8_t recv_line_index;
     void (*fsm_recv_byte)(struct dtu_m35 *m35, uint8_t b);
     os_time_t time_recv_default;
-
+    os_sem_t cmd_sem;
+    uint8_t cmd_rb_buffer[100];
+    struct ringbuffer cmd_rb;
     enum DTUM35_RUNTIME_STATUS runtime_status;
     uint8_t wait_time_index_for_restart;
-
     enum DTUM35_OPS ops;
-
     char imei[20];
     char ccid[24];
-
     uint16_t lacci[2];
-
     uint8_t rssi, ber;
-
     uint32_t data_acked;
 };
 

@@ -3,20 +3,95 @@
 #include "string.h"
 #include "stdio.h"
 
-#define DEBUG_LEVEL DEBUG_LEVEL_TRACE
+#define LOG_LEVEL LOG_LEVEL_TRACE
 
-#include "debug.h"
+#include "logger.h"
+
+#define SERIAL_RECV_MODE_REPLY_ONLY      0
+#define SERIAL_RECV_MODE_REPLY_AND_DATA  1
+#define SERIAL_RECV_STAGE_REPLY  0
+#define SERIAL_RECV_STAGE_DATA   1
+
+/*
+void atcmd_recv_line(atcmd_t atcmd, const char *line, uint8_t size) {
+    LOG(LOG_LEVEL_DEBUG, "ATCMD<- [%d]%s", size, line);
+    OS_CRITICAL(
+        (void)ringbuffer_write(&atcmd->rb, line, size);
+    );
+    os_post_sem(atcmd->sem);
+}
+*/
+
+static void serial_recv_ipd_content(atcmd_t atcmd, uint8_t b);
+static void serial_recv_ipd_length(atcmd_t atcmd, uint8_t b);
+static void serial_recv_serial_default(atcmd_t atcmd, uint8_t b);
+
+static void serial_recv_ipd_content(atcmd_t atcmd, uint8_t b) {
+    //LOG(LOG_LEVEL_TRACE, "%s: %02X %c", __func__, b, b);
+    ringbuffer_put(&atcmd->ipd_rb, b, 1);
+    atcmd->time_to_default = os_get_time() + 20;
+    ++atcmd->ipd_recv_index;
+    if (atcmd->ipd_recv_index >= atcmd->ipd_length) {
+        LOG(LOG_LEVEL_TRACE, "%s: ->default[%d]", __func__, atcmd->ipd_length);
+        atcmd->serial_recv = serial_recv_serial_default;
+    }
+}
+
+static void serial_recv_ipd_length(atcmd_t atcmd, uint8_t b) {
+    //LOG(LOG_LEVEL_TRACE, "%s: %02X %c", __func__, b, b);
+    if (b == ':') {
+        atcmd->ipd_recv_index = 0;
+        atcmd->time_to_default = os_get_time() + 20;
+        atcmd->serial_recv = serial_recv_ipd_content;
+        LOG(LOG_LEVEL_TRACE, "%s: ->IPD content[%d]", __func__, atcmd->ipd_length);
+    } else if (b >= '0' && b <= '9') {
+        atcmd->ipd_length *= 10;
+        atcmd->ipd_length += (b - '0');
+    }
+}
+
+static void serial_recv_serial_default(atcmd_t atcmd, uint8_t b) {
+    //LOG(LOG_LEVEL_TRACE, "%s: %02X %c", __func__, b, b);
+    if (b == '\n') {
+        atcmd->auto_prefix_index = 0;
+        ringbuffer_put(&atcmd->rb, 0, 1);
+        os_post_sem(atcmd->sem);
+    } else if (b != '\r') {
+        if (atcmd->auto_prefix_index < 5) {
+            atcmd->auto_prefix[atcmd->auto_prefix_index++] = b;
+        }
+        if (atcmd->auto_prefix_index == 3 && (memcmp(atcmd->auto_prefix, "IPD", 3) == 0)) {
+            ringbuffer_clear(&atcmd->rb);
+            LOG(LOG_LEVEL_TRACE, "%s: ->IPD length", __func__);
+            atcmd->serial_recv = serial_recv_ipd_length;
+            atcmd->ipd_length = 0;
+            atcmd->auto_prefix_index = 0;
+            atcmd->time_to_default = os_get_time() + 50;
+        } else {
+            ringbuffer_put(&atcmd->rb, b, 1);
+        }
+    }
+}
+
+uint8_t atcmd_recv_serial_byte(atcmd_t atcmd, uint8_t b) {
+    if (atcmd->serial_recv != serial_recv_serial_default &&
+            os_get_time() >= atcmd->time_to_default) {
+        LOG(LOG_LEVEL_TRACE, "%s: ->default[FORCE]", __func__);
+        atcmd->serial_recv = serial_recv_serial_default;
+    }
+    atcmd->serial_recv(atcmd, b);
+}
 
 static void send_string(atcmd_t atcmd, const char *s) {
-    atcmd->send((const unsigned char *)s, strlen(s));
+    atcmd->serial_send((const unsigned char *)s, strlen(s));
 }
 
 static void send_byte(atcmd_t atcmd, uint8_t b) {
-    atcmd->send(&b, 1);
+    atcmd->serial_send(&b, 1);
 }
 
 static void send_bytes(atcmd_t atcmd, const uint8_t *s, uint16_t size) {
-    atcmd->send(s, size);
+    atcmd->serial_send(s, size);
 }
 
 static void clear_recv_buffer(atcmd_t atcmd) {
@@ -34,9 +109,8 @@ static uint8_t expect(atcmd_t atcmd, const struct atcmd_expect *exp, os_time_t m
     os_time_t end = now + ms;
 
     for (; now < end; now = os_get_time()) {
-        dprintf(DEBUG_LEVEL_DEBUG, "wait for reply\n");
         if (0 == os_pend_sem(atcmd->sem, end - now)) {
-            dprintf(DEBUG_LEVEL_DEBUG, "wait for reply timeout\n");
+            LOG(LOG_LEVEL_DEBUG, "Timeout ...");
             return 0;
         }
 
@@ -49,31 +123,26 @@ static uint8_t expect(atcmd_t atcmd, const struct atcmd_expect *exp, os_time_t m
                       &size);
         );
         if (rc) {
-            dprintf(DEBUG_LEVEL_DEBUG, "get reply \"%s\"\n", exp->recv_buff);
+            LOG(LOG_LEVEL_DEBUG, "Reply <\"%s\">", exp->recv_buff);
             return 1;
         }
     }
     return 0;
 }
 
-void atcmd_init(atcmd_t atcmd, uint8_t *buff, uint8_t buff_size, void (*send)(const uint8_t *dat, uint16_t size)) {
-    atcmd->send = send;
-    ringbuffer_init(&atcmd->rb, buff, buff_size);
+void atcmd_init(atcmd_t atcmd, const struct atcmd_init_param *param) {
+    atcmd->serial_send = param->serial_send;
+    atcmd->auto_prefix_index = 0;
+    atcmd->serial_recv = serial_recv_serial_default;
+    ringbuffer_init(&atcmd->rb, param->recv_buffer, param->recv_buffer_len);
+    ringbuffer_init(&atcmd->ipd_rb, param->ipd_buffer, param->ipd_buffer_len);
     atcmd->sem = os_create_sem();
-}
-
-void atcmd_recv_line(atcmd_t atcmd, const char *line, uint8_t size) {
-    dprintf(DEBUG_LEVEL_DEBUG, "ATCMD<- [%d]%s\n", size, line);
-    OS_CRITICAL(
-        (void)ringbuffer_write(&atcmd->rb, line, size);
-    );
-    os_post_sem(atcmd->sem);
 }
 
 uint8_t atcmd_exec_command(atcmd_t atcmd, const char *cmd, const struct atcmd_expect *exp, os_time_t ms) {
     if (cmd != NULL) {
         clear_recv_buffer(atcmd);
-        dprintf(DEBUG_LEVEL_DEBUG, "ATCMD-> %s\n", cmd);
+        LOG(LOG_LEVEL_DEBUG, "ATCMD-> %s", cmd);
         send_string(atcmd, cmd);
         if (*cmd) {
             send_byte(atcmd, '\r');
@@ -149,10 +218,11 @@ uint8_t atcmd_get_ccid(atcmd_t atcmd, char *buf, uint8_t len) {
             continue;
         }
         if (strlen(buf) > 18 && strlen(buf) <= 21) {
+            LOG(LOG_LEVEL_INFO, "Get CCID: \"%s\"", buf);
             return 1;
         }
     }
-
+    LOG(LOG_LEVEL_WARN, "Get CCID error");
     return 0;
 }
 
@@ -174,9 +244,11 @@ uint8_t atcmd_get_imei(atcmd_t atcmd, char *buf, uint8_t len) {
             continue;
         }
         if (strlen(buf) > 12 && strlen(buf) < 30) {
+            LOG(LOG_LEVEL_INFO, "Get IMEI: \"%s\"", buf);
             return 1;
         }
     }
+    LOG(LOG_LEVEL_WARN, "Get IMEI error");
     return 0;
 }
 
@@ -186,19 +258,19 @@ static unsigned char is_ip_string(const char *s) {
     if (!s) {
         return 0;
     }
-    ipseg = strtol(p, &p, 10);
+    ipseg = strtol(p, (char **)&p, 10);
     if (ipseg < 0 || ipseg > 255 || *p != '.') {
         return 0;
     }
-    ipseg = strtol(p + 1, &p, 10);
+    ipseg = strtol(p + 1, (char **)&p, 10);
     if (ipseg < 0 || ipseg > 255 || *p != '.') {
         return 0;
     }
-    ipseg = strtol(p + 1, &p, 10);
+    ipseg = strtol(p + 1, (char **)&p, 10);
     if (ipseg < 0 || ipseg > 255 || *p != '.') {
         return 0;
     }
-    ipseg = strtol(p + 1, &p, 10);
+    ipseg = strtol(p + 1, (char **)&p, 10);
     if (ipseg < 0 || ipseg > 255 || *p != 0) {
         return 0;
     }
@@ -221,13 +293,16 @@ uint8_t atcmd_connect_tcp(atcmd_t atcmd, const char *addr, uint16_t port) {
         (void)sprintf(line, "\",\"%d\"", port);
         exp.expect = "";
         if (!atcmd_exec_command(atcmd, line, &exp, 1000)) {
+            LOG(LOG_LEVEL_WARN, "Reply timeout");
             return 0;
         }
 
         if (strcmp(line, "ALREADY CONNECT") == 0) {
+            LOG(LOG_LEVEL_INFO, "Already Connect");
             return 1;
         }
         if (strcmp(line, "OK") != 0) {
+            LOG(LOG_LEVEL_WARN, "Reply OK??");
             return 0;
         }
 
@@ -236,14 +311,196 @@ uint8_t atcmd_connect_tcp(atcmd_t atcmd, const char *addr, uint16_t port) {
             return 0;
         }
         if (strcmp(line, "CONNECT OK") == 0) {
+            LOG(LOG_LEVEL_INFO, "Connect OK");
             return 1;
         }
         return 0;
     }
+
+    LOG(LOG_LEVEL_WARN, "Connect TCP parameter erro");
     return 0;
 }
 
+#if 0
+#define ACTION_DATA 0
+#define ACTION_MUST 1
+#define ACTION_WAIT 2
+#define ACTION_LENGTH 3
+#define ACTION_NONE 4
+struct stage_action_map {
+    char chr;
+    char action;
+};
 
+// +QIRD:112.113.1.22:9090,TCP,5<CR><LF>
+const static struct stage_action_map stage_action_maps[] = {
+    /*0*/ {'+', ACTION_MUST},
+    /*1*/ {'Q', ACTION_MUST},
+    /*2*/ {'I', ACTION_MUST},
+    /*3*/ {'R', ACTION_MUST},
+    /*4*/ {'D', ACTION_MUST},
+    /*5*/ {':', ACTION_MUST},
+    /*6*/ {':', ACTION_WAIT},
+    /*7*/ {',', ACTION_WAIT},
+    /*8*/ {',', ACTION_WAIT},
+    /*9*/ {'x', ACTION_LENGTH},
+    /*10*/ {0x0A, ACTION_MUST},
+    /*11*/ {'x', ACTION_DATA},
+    /*11*/ {'x', ACTION_NONE},
+};
+
+static void atcmd_serial_recv_QIRD(atcmd_t atcmd, uint8_t b) {
+    const struct stage_action_map *map = &stage_action_maps[atcmd->serial_recv_info.QIRD.stage];
+    switch (map->action) {
+    case ACTION_DATA:
+        *(atcmd->serial_recv_info.QIRD.buffer) = b;
+        ++atcmd->serial_recv_info.QIRD.buffer;
+        ++atcmd->serial_recv_info.QIRD.recvlen;
+        if (atcmd->serial_recv_info.QIRD.recvlen < atcmd->serial_recv_info.QIRD.datlen) {
+            return;
+        }
+        break;
+    case ACTION_MUST:
+        if (b == map->chr) {
+            ++atcmd->serial_recv_info.QIRD.stage;
+            return;
+        }
+        break;
+    case ACTION_WAIT:
+        if (b == map->chr) {
+            ++atcmd->serial_recv_info.QIRD.stage;
+        }
+        return;
+    case ACTION_LENGTH:
+        if (b == 0x0D) {
+            if (atcmd->serial_recv_info.QIRD.recvlen <= atcmd->serial_recv_info.QIRD.datlen) {
+                atcmd->serial_recv_info.QIRD.datlen = atcmd->serial_recv_info.QIRD.recvlen;
+                atcmd->serial_recv_info.QIRD.recvlen = 0;
+                ++atcmd->serial_recv_info.QIRD.stage;
+                return;
+            }
+        } else if (b >= '0' && b <= '9') {
+            atcmd->serial_recv_info.QIRD.recvlen *= 10;
+            atcmd->serial_recv_info.QIRD.recvlen += (b - '0');
+            return;
+        }
+        atcmd->serial_recv_info.QIRD.recvlen = 0;
+        break;
+    case ACTION_NONE:
+        return;
+    default:
+        atcmd->serial_recv_info.QIRD.recvlen = 0;
+        break;
+    }
+    os_post_sem(atcmd->sem);
+}
+
+uint16_t atcmd_recv_tcp(atcmd_t atcmd, uint8_t *buff, uint16_t len, os_time_t timeout_ms) {
+    os_time_t end = os_get_time() + timeout_ms;
+    LOG(LOG_LEVEL_TRACE, "Try to recv %d bytes with timeout %d", len, timeout_ms);
+
+    OS_CRITICAL(
+        atcmd->serial_recv_info.QIRD.buffer = buff;
+        atcmd->serial_recv_info.QIRD.datlen = len;
+        atcmd->serial_recv_info.QIRD.stage = 0;
+        atcmd->serial_recv_info.QIRD.recvlen = 0;
+        atcmd->serial_recv = atcmd_serial_recv_QIRD;
+    );
+
+    while (1) {
+        char buf[20];
+        (void)sprintf((char *)buf, "AT+QIRD=0,1,0,%d", len);
+        atcmd_exec_command(atcmd, buf, NULL, 0);
+
+        if (!os_pend_sem(atcmd->sem, end - os_get_time())) {
+            LOG(LOG_LEVEL_WARN, "Read timeout");
+            len = 0;
+            break;
+            return;
+        }
+
+        OS_CRITICAL(
+            len = atcmd->serial_recv_info.QIRD.recvlen;
+        );
+
+        if (len > 0) {
+            break;
+        }
+
+        if (os_get_time() > end) {
+            len = 0;
+            break;
+        }
+
+        os_sleep(100);
+    }
+
+    OS_CRITICAL(
+        atcmd->serial_recv = atcmd_recv_serial_default;
+    );
+    return len;
+}
+#endif
+
+uint16_t atcmd_recv_tcp(atcmd_t atcmd, uint8_t *buff, uint16_t len, os_time_t timeout_ms) {
+    os_time_t end = os_get_time() + timeout_ms;
+    uint16_t read = 0;
+    while (1) {
+        OS_CRITICAL(
+            read += ringbuffer_try_read(&atcmd->ipd_rb, &buff[read], len - read);
+        );
+        if (read >= len) {
+            return read;
+        }
+        if (os_get_time() >= end) {
+            return read;
+        }
+        os_sleep(10);
+    }
+}
+
+uint8_t atcmd_send_tcp(atcmd_t atcmd, const uint8_t *dat, uint16_t len, os_time_t timeout_ms) {
+    char buf[20];
+    os_time_t t, end;
+    struct atcmd_expect exp;
+    uint16_t sent = 0;
+
+    if (!dat || len <= 0) {
+        return 0;
+    }
+    end = os_get_time() + timeout_ms;
+    exp.expect = "";
+    exp.recv_buff = buf;
+    exp.buff_size = sizeof(buf);
+
+    LOG(LOG_LEVEL_DEBUG, "Try to send %d bytes", len);
+    (void)sprintf((char *)buf, "AT+QISEND=%d", len);
+    clear_recv_buffer(atcmd);
+    (void)atcmd_exec_command(atcmd, (char *)buf, NULL, 250);
+    send_bytes(atcmd, dat, len);
+
+    for (t = os_get_time(); t < end; t = os_get_time()) {
+        if (!atcmd_exec_command(atcmd, NULL, &exp, end - t )) {
+            LOG(LOG_LEVEL_WARN, "Reply timeout");
+            return 0;
+        }
+
+        if (strcmp("SEND OK", (char *)buf) == 0) {
+            break;
+        }
+        if (strcmp("SEND FAIL", (char *)buf) == 0) {
+            LOG(LOG_LEVEL_WARN, "Send FAIL");
+            return 0;
+        }
+        if (strcmp("ERROR", (char *)buf) == 0) {
+            LOG(LOG_LEVEL_WARN, "Error");
+            return 0;
+        }
+    }
+
+    LOG(LOG_LEVEL_INFO, "Send OK");
+    return 1;
+}
 
 uint8_t atcmd_send_tcp_cb(atcmd_t atcmd, void *private_data, cb_get_send_data cb_get, uint16_t total_len) {
     char buf[20];
@@ -266,6 +523,8 @@ uint8_t atcmd_send_tcp_cb(atcmd_t atcmd, void *private_data, cb_get_send_data cb
         }
         sent += this_len;
 
+        LOG(LOG_LEVEL_DEBUG, "Try to send %d bytes", this_len);
+
         (void)sprintf((char *)buf, "AT+QISEND=%d", this_len);
         clear_recv_buffer(atcmd);
         (void)atcmd_exec_command(atcmd, (char *)buf, NULL, 250);
@@ -287,6 +546,7 @@ uint8_t atcmd_send_tcp_cb(atcmd_t atcmd, void *private_data, cb_get_send_data cb
         timeout = os_get_time() + 1000;
         for (t = os_get_time(); t < timeout; t = os_get_time()) {
             if (!atcmd_exec_command(atcmd, NULL, &exp, timeout - t )) {
+                LOG(LOG_LEVEL_WARN, "Reply timeout");
                 return 0;
             }
 
@@ -294,14 +554,18 @@ uint8_t atcmd_send_tcp_cb(atcmd_t atcmd, void *private_data, cb_get_send_data cb
                 break;
             }
             if (strcmp("SEND FAIL", (char *)buf) == 0) {
+                LOG(LOG_LEVEL_WARN, "Send FAIL");
                 return 0;
             }
             if (strcmp("ERROR", (char *)buf) == 0) {
+                LOG(LOG_LEVEL_WARN, "Error");
                 return 0;
             }
         }
     }
 
+
+    LOG(LOG_LEVEL_INFO, "Send OK");
     return 1;
 }
 
@@ -331,6 +595,7 @@ uint8_t atcmd_get_signal_quality(atcmd_t atcmd, uint8_t *rssi, uint8_t *ber) {
     exp.buff_size = sizeof(line);
 
     if (!atcmd_exec_command(atcmd, "AT+CSQ", &exp, 500)) {
+        LOG(LOG_LEVEL_WARN, "Command error");
         return 0;
     }
 
@@ -338,19 +603,24 @@ uint8_t atcmd_get_signal_quality(atcmd_t atcmd, uint8_t *rssi, uint8_t *ber) {
     p = &line[5];
     this_rssi = atoi_skip_bank_prefix(p);
     if (this_rssi > 31 && this_rssi != 99) {
+        LOG(LOG_LEVEL_WARN, "Format error");
         return 0;
     }
 
 
     p = strchr(p + 1, ',');
     if (!p) {
+        LOG(LOG_LEVEL_WARN, "Format error");
         return 0;
     }
 
     this_ber = atoi_skip_bank_prefix(++p);
     if (this_ber > 7 && this_ber != 99) {
+        LOG(LOG_LEVEL_WARN, "Format error");
         return 0;
     }
+
+    LOG(LOG_LEVEL_INFO, "Get RSSI: %d, BER: %d", this_rssi, this_ber);
 
     if (rssi) {
         *rssi = this_rssi;
@@ -397,10 +667,14 @@ uint8_t atcmd_get_data_sent_info(atcmd_t atcmd, unsigned long *sent, unsigned lo
     }
 
     p = strchr(p, ',');
-    if (!p) return 0;
+    if (!p) {
+        return 0;
+    }
 
     this_unacked = atoi_skip_bank_prefix(++p);
-    if (this_unacked == -1) return 0;
+    if (this_unacked == -1) {
+        return 0;
+    }
 
     if (sent) {
         *sent = this_sent;

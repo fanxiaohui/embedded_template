@@ -18,20 +18,8 @@ typedef uint32_t os_time_t;
 extern struct timespec otime;
 extern os_mutex_t critical_mutex;
 
-static inline os_sem_t os_create_sem(void) {
-    static sem_t sem[100];
-    static char used[100];
-
-    int i;
-    for (i = 0; i < sizeof(sem)/sizeof(sem[0]); ++i) {
-        if (!used[i]) {
-            used[i] = 1;
-            sem_init(&sem[i], 0, 0);
-            return &sem[i];
-        }
-    }
-    return NULL;
-}
+inline os_sem_t os_create_sem(void);
+inline void os_destroy_sem(os_sem_t sem);
 
 static inline char os_post_sem(os_sem_t sem) {
     return 0 == sem_post(sem);
@@ -109,18 +97,9 @@ static inline os_time_t os_get_time(void) {
     return msec;
 }
 
-static inline void os_destroy_sem(os_sem_t sem) {
-}
 
 static inline void os_destroy_mutex(os_mutex_t mutex) {
 }
-
-
-static inline void os_platform_init(void) {
-    clock_gettime(CLOCK_REALTIME, &otime);
-    critical_mutex = os_create_mutex();
-}
-
 
 #define OS_CRITICAL(block) do { \
     os_lock_mutex(critical_mutex); \

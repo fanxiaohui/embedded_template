@@ -65,16 +65,7 @@ static void *uart_recv_thread(void *p) {
     uint8_t b;
     while (1) {
         while (1 != uart_recv(&b, 1));
-        if (b == '\n') {
-            buff[index] = 0;
-            atcmd_recv_line(&atcmd, buff, index);
-            index = 0;
-            continue;
-        }
-
-        if (b != '\r' && index < (sizeof(buff) - 1)) {
-            buff[index++] = b;
-        }
+        atcmd.serial_recv(&atcmd, b);
     }
 }
 
@@ -83,9 +74,15 @@ int main(int argc, char **argv) {
     static uint8_t buff[50];
     int ret;
 
+    struct atcmd_init_param param = {
+        uart_send,
+        recv_buff,
+        sizeof(recv_buff),
+    };
+
     uart_init();
 
-    atcmd_init(&atcmd, recv_buff, sizeof(recv_buff), uart_send);
+    atcmd_init(&atcmd, &param);
 
     if ((ret = pthread_create(&tid, NULL, uart_recv_thread, NULL)) != 0) {
         fprintf(stderr, "pthread create: %s\n", strerror(ret));

@@ -7,9 +7,11 @@
 #ifndef __RINGBUFFER_H__
 #define __RINGBUFFER_H__
 
+#include "stdint.h"
+
 #ifndef RINGBUFFER_SIZE_TYPE
 /** 循环Buffer长度的类型. */
-#define RINGBUFFER_SIZE_TYPE unsigned int
+#define RINGBUFFER_SIZE_TYPE uint16_t
 #endif
 
 #ifndef __FAR

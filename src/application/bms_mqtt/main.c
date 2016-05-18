@@ -1,4 +1,7 @@
 #include "dtu_m35_platform.h"
+#include "dtu_m35_mqtt_impl.h"
+#include "MQTTClient.h"
+#include "MQTTConnect.h"
 
 #include <stdio.h>
 #include <errno.h>
@@ -19,8 +22,9 @@ static void uart_init(void) {
 
     sprintf(buffer, "\\\\.\\COM%d", port & 0xF);
     uart = CreateFile(buffer, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
-    if (uart == INVALID_HANDLE_VALUE)
+    if (uart == INVALID_HANDLE_VALUE) {
         return;
+    }
     SetupComm(uart, 8192, 8192);
     GetCommState(uart, &dcb);
     dcb.BaudRate = 9600;
@@ -41,14 +45,18 @@ static void uart_init(void) {
 
 static void uart_send(const uint8_t *buff, uint16_t size) {
     uint32_t dwSize;
-    if (uart == INVALID_HANDLE_VALUE) return;
+    if (uart == INVALID_HANDLE_VALUE) {
+        return;
+    }
     WriteFile(uart, buff, size, (LPDWORD)&dwSize, NULL);
 }
 
 int uart_recv(uint8_t *buffer, uint32_t size) {
     uint32_t dwRead;
     COMSTAT state;
-    if (uart == INVALID_HANDLE_VALUE) return 0;
+    if (uart == INVALID_HANDLE_VALUE) {
+        return 0;
+    }
     ClearCommError(uart, (LPDWORD)&dwRead, &state);
     if (state.cbInQue > size) {
         ReadFile(uart, buffer, size, (LPDWORD)&dwRead, NULL);
@@ -60,7 +68,6 @@ int uart_recv(uint8_t *buffer, uint32_t size) {
 
 
 static void *uart_recv_thread(void *p);
-
 
 static void m35_platform_init(void) {
     uart_init();
@@ -76,12 +83,13 @@ static void m35_platform_power_enable(uint8_t is_enable) {
 }
 
 static void m35_platform_power_key(uint8_t is_assert) {
-
 }
 
 static void m35_platform_serial_send(const uint8_t *dat, uint16_t len) {
     uint32_t dwSize;
-    if (uart == INVALID_HANDLE_VALUE) return;
+    if (uart == INVALID_HANDLE_VALUE) {
+        return;
+    }
     WriteFile(uart, dat, len, (LPDWORD)&dwSize, NULL);
 }
 
@@ -97,7 +105,11 @@ const struct dtu_m35_platform dtu_m35_platform = {
     .serial_send = m35_platform_serial_send,
 };
 
-struct dtu_m35 m35;
+static struct dtu_m35 m35;
+static const struct mqtt_network mqtt_m35_network = M35_MQTT_NETOWK(&m35);
+static struct mqtt_client client;
+static uint8_t write_buffer[200];
+static uint8_t read_buffer[200];
 
 static void *uart_recv_thread(void *p) {
     static uint8_t buff[200];
@@ -105,21 +117,48 @@ static void *uart_recv_thread(void *p) {
     uint8_t b;
     while (1) {
         while (1 != uart_recv(&b, 1));
-        dtum35_recv_byte(&m35, b);
+        OS_CRITICAL(
+            //dtum35_recv_byte(&m35, b);
+            atcmd_recv_serial_byte(&m35.atcmd, b);
+        );
     }
 }
 
+char payload[100];
 
+static MQTTMessage msg = {
+    QOS1,
+    1,
+    0,
+    0,
+};
+
+void mqtt_run(mqtt_client_t client) {
+    static int i = 0;
+    client->ipstack->connect(client->ipstack->priv, "104.224.149.201", 1883);
+    os_sleep(3000);
+    MQTTConnect(client, NULL);
+
+    while (1) {
+        sprintf(payload, "hello, mqtt %d", i++);
+        msg.payload = payload;
+        msg.payloadlen = strlen(payload);
+        MQTTPublish(client, "hello/xx", &msg);
+        MQTTYield(client, 20000);
+    }
+}
 
 int main(int argc, char **argv) {
     static uint8_t buff[50];
-    //printf("hello\n");
+    pthread_t tid;
     os_platform_init();
     dtum35_init(&m35, &dtu_m35_platform);
-    os_sleep(100);
-    //atcmd_retry_until_reply(&m35.atcmd, "ATE0", "OK", 500, 5);
-    //while (1) {
-    //}
-    dtum35_run(&m35);
+    pthread_create(&tid, NULL, (void *(*)(void *))dtum35_run, &m35);
+    MQTTClientInit(&client,
+                   &mqtt_m35_network,
+                   20000,
+                   write_buffer, sizeof(write_buffer),
+                   read_buffer, sizeof(read_buffer));
+    mqtt_run(&client);
 }
 

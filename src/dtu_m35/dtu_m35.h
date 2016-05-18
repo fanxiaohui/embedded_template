@@ -2,6 +2,7 @@
 #define __DTU_M35_H__
 
 #include "stdint.h"
+#include "platform_os.h"
 
 enum DTUM35_RUNTIME_STATUS {
     DTUM35_RUNTIME_STATUS_UNKNOWN = 0,
@@ -36,6 +37,11 @@ typedef const struct dtu_m35_platform *dtu_m35_platform_t;
 
 uint8_t dtum35_init(dtu_m35_t m35, dtu_m35_platform_t platform);
 uint8_t dtum35_run(dtu_m35_t m35);
+
+int dtum35_tcp_read(dtu_m35_t m35, unsigned char* buffer, int len, os_time_t timeout_ms);
+int dtum35_tcp_write(dtu_m35_t m35, unsigned char* buffer, int len, os_time_t timeout_ms);
+int dtum35_tcp_connect(dtu_m35_t m35, const char *host, uint16_t port);
+int dtum35_tcp_disconnect(dtu_m35_t m35);
 void dtum35_recv_byte(dtu_m35_t m35, uint8_t b);
 
 #endif

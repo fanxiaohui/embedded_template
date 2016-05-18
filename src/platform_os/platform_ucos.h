@@ -18,8 +18,7 @@ typedef uint32_t os_time_t;
 /// \param fmt 信息.
 void os_assert_info(const char *file, int line, const char *fmt, ...);
 
-//void os_platform_init(void);
-#define os_platform_init() do { ; } while(0)
+void os_platform_init(void);
 
 /// \brief os_create_sem 创建一个信号量.
 ///

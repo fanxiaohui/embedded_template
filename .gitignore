@@ -1,3 +1,5 @@
 build/*
-
 tags
+src/cscope.files
+.tags
+.tags_sorted_by_file

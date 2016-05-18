@@ -1,0 +1,7 @@
+set(SOURCES
+    ${SOURCES}
+    ${CMAKE_CURRENT_SOURCE_DIR}/dtu_m35.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/dtu_m35_mqtt_impl.c
+    PARENT_SCOPE
+)
+
