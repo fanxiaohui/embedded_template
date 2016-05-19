@@ -30,6 +30,7 @@ uint8_t atcmd_retry_until_replys(atcmd_t atcmd, const char *cmd, const char *con
 uint8_t atcmd_get_ccid(atcmd_t atcmd, char *buf, uint8_t len);
 uint8_t atcmd_get_imei(atcmd_t atcmd, char *buf, uint8_t len);
 uint8_t atcmd_connect_tcp(atcmd_t atcmd, const char *addr, uint16_t port);
+uint8_t atcmd_disconnect_tcp(atcmd_t atcmd);
 uint8_t atcmd_send_tcp(atcmd_t atcmd, const uint8_t *dat, uint16_t len, os_time_t timeout_ms);
 uint16_t atcmd_recv_tcp(atcmd_t atcmd, uint8_t *buff, uint16_t len, os_time_t timeout_ms);
 uint8_t atcmd_send_tcp_cb(atcmd_t atcmd, void *private_data, cb_get_send_data cb_get, uint16_t total_len);

@@ -242,6 +242,10 @@ struct cmd_info {
     uint8_t param_len;
 };
 
+struct cmd_param_disconnect_tcp {
+    char *ret;
+};
+
 struct cmd_param_connect_tcp {
     const char *host;
     uint16_t port;
@@ -264,6 +268,7 @@ struct cmd_param_send_tcp {
 
 union cmd_param {
     struct cmd_param_connect_tcp connect_tcp;
+    struct cmd_param_disconnect_tcp disconnect_tcp;
     struct cmd_param_send_tcp send_tcp;
     struct cmd_param_recv_tcp recv_tcp;
 };
@@ -276,9 +281,16 @@ struct cmd_handle_map {
 
 enum {
     CMD_CONNECT_TCP,
+    CMD_DISCONNECT_TCP,
     CMD_SEND_TCP,
     CMD_RECV_TCP,
 };
+
+static void handle_disconnect_tcp(dtu_m35_t m35, union cmd_param *param) {
+    LOG(LOG_LEVEL_TRACE, "%s", __func__);
+    struct cmd_param_disconnect_tcp *p = &param->disconnect_tcp;
+    *(p->ret) = atcmd_disconnect_tcp(&m35->atcmd);
+}
 
 static void handle_connect_tcp(dtu_m35_t m35, union cmd_param *param) {
     LOG(LOG_LEVEL_TRACE, "%s", __func__);
@@ -295,6 +307,7 @@ static void handle_send_tcp(dtu_m35_t m35, union cmd_param *param) {
 static const struct cmd_handle_map cmd_handle_maps[] = {
     {CMD_SEND_TCP, sizeof(struct cmd_param_send_tcp), handle_send_tcp},
     {CMD_CONNECT_TCP, sizeof(struct cmd_param_connect_tcp), handle_connect_tcp},
+    {CMD_DISCONNECT_TCP, sizeof(struct cmd_param_disconnect_tcp), handle_disconnect_tcp},
 };
 
 
@@ -320,12 +333,14 @@ uint8_t dtum35_run(struct dtu_m35 *m35) {
         }
         while (1) {
             if (!os_pend_sem(m35->cmd_sem, 5000)) {
+#if 0
                 update_ops(m35);
                 update_imei(m35);
                 update_ccid(m35);
                 update_signal_quality(m35);
                 update_lacci(m35);
                 update_data_send_info(m35);
+#endif
                 goto _clear_rb;
             }
             LOG(LOG_LEVEL_TRACE, "%s", __func__);
@@ -440,5 +455,33 @@ int dtum35_tcp_connect(dtu_m35_t m35, const char *host, uint16_t port) {
 }
 
 int dtum35_tcp_disconnect(dtu_m35_t m35) {
+    char ret;
+    struct cmd_param_disconnect_tcp param = {&ret};
+    struct cmd_info cmd_info = {CMD_DISCONNECT_TCP, sizeof(param)};
+    RINGBUFFER_SIZE_TYPE size;
+    LOG(LOG_LEVEL_DEBUG, "Try to disconnect TCP");
+
+    OS_CRITICAL(
+        size = ringbuffer_get_left_space(&m35->cmd_rb);
+    );
+    if (size < (sizeof(param) + sizeof(cmd_info))) {
+        LOG(LOG_LEVEL_WARN, "Command buffer full");
+        return 0;
+    }
+
+    ret = 0x7F;
+    OS_CRITICAL(
+        ringbuffer_write(&m35->cmd_rb, (uint8_t *)&cmd_info, sizeof(cmd_info));
+        ringbuffer_write(&m35->cmd_rb, (uint8_t *)&param, sizeof(param));
+        os_post_sem(m35->cmd_sem);
+    );
+
+    LOG(LOG_LEVEL_DEBUG, "Wait for disconnet ...");
+    do {
+        os_sleep(2);
+    } while (ret == 0x7F);
+
+    LOG(LOG_LEVEL_INFO, "Disconnect TCP return %d", ret);
+    return ret;
 }
 

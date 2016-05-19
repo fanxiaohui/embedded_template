@@ -1,14 +1,17 @@
-#include "dtu_m35_platform.h"
-#include "dtu_m35_mqtt_impl.h"
-#include "MQTTClient.h"
-#include "MQTTConnect.h"
-
 #include <stdio.h>
 #include <errno.h>
 #include <pthread.h>
 #include <string.h>
-#include "platform_os.h"
 #include <windows.h>
+
+#include "dtu_m35_platform.h"
+#include "dtu_m35_mqtt_impl.h"
+#include "MQTTClient.h"
+#include "MQTTConnect.h"
+#include "platform_os.h"
+#include "logger.h"
+
+#define LOG_LEVEL LOG_LEVEL_TRACE
 
 static uint8_t recv_buff[128];
 
@@ -133,19 +136,34 @@ static MQTTMessage msg = {
     0,
 };
 
+void message_handler_test_d(MessageData *msg) {
+    int i;
+    MQTTMessage * m = msg->message;
+    uint8_t *payload = m->payload;
+    LOG(LOG_LEVEL_INFO, "%s", __func__);
+
+    printf("LEN: %d\n", m->payloadlen);
+    printf("DAT:");
+    for (i=0; i<m->payloadlen; ++i) {
+        printf(" %02X", *payload++);
+    }
+    printf("\n");
+}
+
 void mqtt_run(mqtt_client_t client) {
     static int i = 0;
     client->ipstack->connect(client->ipstack->priv, "104.224.149.201", 1883);
     os_sleep(3000);
     MQTTConnect(client, NULL);
-
-    while (1) {
+    MQTTSubscribe(client, "test/d", QOS1, message_handler_test_d);
+    do {
         sprintf(payload, "hello, mqtt %d", i++);
         msg.payload = payload;
         msg.payloadlen = strlen(payload);
-        MQTTPublish(client, "hello/xx", &msg);
+        MQTTPublish(client, "test/u", &msg);
         MQTTYield(client, 20000);
-    }
+    } while (SUCCESS ==  MQTTYield(client, 20000));
+    client->ipstack->disconnect(client->ipstack->priv);
 }
 
 int main(int argc, char **argv) {
@@ -159,6 +177,9 @@ int main(int argc, char **argv) {
                    20000,
                    write_buffer, sizeof(write_buffer),
                    read_buffer, sizeof(read_buffer));
-    mqtt_run(&client);
+    while (1) {
+        mqtt_run(&client);
+        os_sleep(4000);
+    }
 }
 

@@ -321,126 +321,18 @@ uint8_t atcmd_connect_tcp(atcmd_t atcmd, const char *addr, uint16_t port) {
     return 0;
 }
 
-#if 0
-#define ACTION_DATA 0
-#define ACTION_MUST 1
-#define ACTION_WAIT 2
-#define ACTION_LENGTH 3
-#define ACTION_NONE 4
-struct stage_action_map {
-    char chr;
-    char action;
-};
+uint8_t atcmd_disconnect_tcp(atcmd_t atcmd) {
+    struct atcmd_expect exp;
+    exp.expect = "CLOSE OK";
+    exp.recv_buff = 0;
+    exp.buff_size = 0;
 
-// +QIRD:112.113.1.22:9090,TCP,5<CR><LF>
-const static struct stage_action_map stage_action_maps[] = {
-    /*0*/ {'+', ACTION_MUST},
-    /*1*/ {'Q', ACTION_MUST},
-    /*2*/ {'I', ACTION_MUST},
-    /*3*/ {'R', ACTION_MUST},
-    /*4*/ {'D', ACTION_MUST},
-    /*5*/ {':', ACTION_MUST},
-    /*6*/ {':', ACTION_WAIT},
-    /*7*/ {',', ACTION_WAIT},
-    /*8*/ {',', ACTION_WAIT},
-    /*9*/ {'x', ACTION_LENGTH},
-    /*10*/ {0x0A, ACTION_MUST},
-    /*11*/ {'x', ACTION_DATA},
-    /*11*/ {'x', ACTION_NONE},
-};
-
-static void atcmd_serial_recv_QIRD(atcmd_t atcmd, uint8_t b) {
-    const struct stage_action_map *map = &stage_action_maps[atcmd->serial_recv_info.QIRD.stage];
-    switch (map->action) {
-    case ACTION_DATA:
-        *(atcmd->serial_recv_info.QIRD.buffer) = b;
-        ++atcmd->serial_recv_info.QIRD.buffer;
-        ++atcmd->serial_recv_info.QIRD.recvlen;
-        if (atcmd->serial_recv_info.QIRD.recvlen < atcmd->serial_recv_info.QIRD.datlen) {
-            return;
-        }
-        break;
-    case ACTION_MUST:
-        if (b == map->chr) {
-            ++atcmd->serial_recv_info.QIRD.stage;
-            return;
-        }
-        break;
-    case ACTION_WAIT:
-        if (b == map->chr) {
-            ++atcmd->serial_recv_info.QIRD.stage;
-        }
-        return;
-    case ACTION_LENGTH:
-        if (b == 0x0D) {
-            if (atcmd->serial_recv_info.QIRD.recvlen <= atcmd->serial_recv_info.QIRD.datlen) {
-                atcmd->serial_recv_info.QIRD.datlen = atcmd->serial_recv_info.QIRD.recvlen;
-                atcmd->serial_recv_info.QIRD.recvlen = 0;
-                ++atcmd->serial_recv_info.QIRD.stage;
-                return;
-            }
-        } else if (b >= '0' && b <= '9') {
-            atcmd->serial_recv_info.QIRD.recvlen *= 10;
-            atcmd->serial_recv_info.QIRD.recvlen += (b - '0');
-            return;
-        }
-        atcmd->serial_recv_info.QIRD.recvlen = 0;
-        break;
-    case ACTION_NONE:
-        return;
-    default:
-        atcmd->serial_recv_info.QIRD.recvlen = 0;
-        break;
-    }
-    os_post_sem(atcmd->sem);
-}
-
-uint16_t atcmd_recv_tcp(atcmd_t atcmd, uint8_t *buff, uint16_t len, os_time_t timeout_ms) {
-    os_time_t end = os_get_time() + timeout_ms;
-    LOG(LOG_LEVEL_TRACE, "Try to recv %d bytes with timeout %d", len, timeout_ms);
-
-    OS_CRITICAL(
-        atcmd->serial_recv_info.QIRD.buffer = buff;
-        atcmd->serial_recv_info.QIRD.datlen = len;
-        atcmd->serial_recv_info.QIRD.stage = 0;
-        atcmd->serial_recv_info.QIRD.recvlen = 0;
-        atcmd->serial_recv = atcmd_serial_recv_QIRD;
-    );
-
-    while (1) {
-        char buf[20];
-        (void)sprintf((char *)buf, "AT+QIRD=0,1,0,%d", len);
-        atcmd_exec_command(atcmd, buf, NULL, 0);
-
-        if (!os_pend_sem(atcmd->sem, end - os_get_time())) {
-            LOG(LOG_LEVEL_WARN, "Read timeout");
-            len = 0;
-            break;
-            return;
-        }
-
-        OS_CRITICAL(
-            len = atcmd->serial_recv_info.QIRD.recvlen;
-        );
-
-        if (len > 0) {
-            break;
-        }
-
-        if (os_get_time() > end) {
-            len = 0;
-            break;
-        }
-
-        os_sleep(100);
+    if (!atcmd_exec_command(atcmd, "AT+QICLOSE", &exp, 1000)) {
+        return 0;
     }
 
-    OS_CRITICAL(
-        atcmd->serial_recv = atcmd_recv_serial_default;
-    );
-    return len;
+    return 1;
 }
-#endif
 
 uint16_t atcmd_recv_tcp(atcmd_t atcmd, uint8_t *buff, uint16_t len, os_time_t timeout_ms) {
     os_time_t end = os_get_time() + timeout_ms;
@@ -698,7 +590,7 @@ uint8_t atcmd_get_ops(atcmd_t atcmd, char *buf, uint8_t len) {
     exp.recv_buff = buf;
     exp.buff_size = len;
 
-    if (!atcmd_exec_command(atcmd, "AT+COPS?", &exp, 1000)) {
+    if (atcmd_exec_command(atcmd, "AT+COPS?", &exp, 1000)) {
         char *ops = strchr(buf, '\"');
         if (!ops) {
             return 0;
