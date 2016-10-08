@@ -149,5 +149,15 @@ static inline void os_sleep(os_time_t ms) {
     }
 }
 
+
+#define OS_CRITICAL(block) do { \
+    OS_INIT_CRITICAL(); \
+    OS_ENTER_CRITICAL();
+    do { block } while(0); \
+    OS_EXIT_CRITICAL(); \
+} while(0)
+
+
+
 #endif
 

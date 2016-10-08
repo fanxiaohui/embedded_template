@@ -15,24 +15,15 @@
  *    Ian Craggs - documentation and platform specific header
  *******************************************************************************/
 
-#if !defined(__MQTT_CLIENT_C_)
+#ifndef __MQTT_CLIENT_C_
 #define __MQTT_CLIENT_C_
 
 #if defined(__cplusplus)
 extern "C" {
 #endif
 
+#include "timer.h"
 #include "MQTTPacket.h"
-#include "stdio.h"
-
-#if defined(MQTTCLIENT_PLATFORM_HEADER)
-/* The following sequence of macros converts the MQTTCLIENT_PLATFORM_HEADER value
- * into a string constant suitable for use with include.
- */
-#define xstr(s) str(s)
-#define str(s) #s
-#include xstr(MQTTCLIENT_PLATFORM_HEADER)
-#endif
 
 #define MAX_PACKET_ID 65535 /* according to the MQTT specification - do not change! */
 
@@ -42,7 +33,6 @@ extern "C" {
 
 enum QoS { QOS0, QOS1, QOS2 };
 
-#include "timer.h"
 
 /* all failure return codes must be negative */
 enum returnCode { BUFFER_OVERFLOW = -2, FAILURE = -1, SUCCESS = 0 };
